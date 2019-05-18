@@ -7,7 +7,7 @@ class RabbitMQQueue(object):
         self.connection_host = rabbit_host
         self.queue = queue_name
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.connection_host))
-        self.channel = self.connection.chanel()
+        self.channel = self.connection.channel()
         self.tag = None
 
     def __exit__(self, *args):
