@@ -8,12 +8,12 @@ SCORE = 1
 ALERT_NUMBER = 3
 NEGATIVE_SCORE = -1
 
-class UserReducer(multiprocessing.process):
-    def __init__(self, queue_name, rabbit_host, report_file_name):
+class UserReducer(multiprocessing.Process):
+    def __init__(self, id):
         multiprocessing.Process.__init__(self)
-        self.rabbitmq_queue = RabbitMQQueue(queue_name, rabbit_host)
+        self.rabbitmq_queue = RabbitMQQueue("usr_twits%i".format(id), "rabbitmq")
         self.users = {}
-        self.report_file_name = report_file_name
+        self.report_file_name = "user_report.csv"
 
     def _was_already_alerted(self, author_id):
         return (author_id in self.users and self.users[author_id] == ALERT_NUMBER)
@@ -38,10 +38,10 @@ class UserReducer(multiprocessing.process):
         self.rabbitmq_queue.consume(self._callback)
 
 class DateReducer(multiprocessing.Process):
-    def __init__(self, receive_queue_name, send_queu_name, rabbit_host):
+    def __init__(self, id):
         multiprocessing.Process.__init__(self)
-        self.receive_rabbitmq_queue = RabbitMQQueue(receive_queue_name, rabbit_host)
-        self.send_rabbitmq_queue = RabbitMQQueue(send_queue_name, rabbit_host)
+        self.receive_rabbitmq_queue = RabbitMQQueue("date_twits%i".format(id), "rabbitmq")
+        self.send_rabbitmq_queue = RabbitMQQueue("date_processed_twits", "rabbitmq")
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):

@@ -6,7 +6,7 @@ INBOUND = 2
 CREATED_AT = 3
 TEXT = 4
 
-class FilterParser(multiprocessing.process):
+class FilterParser(multiprocessing.Process):
     def __init__(self):
         multiprocessing.Process.__init__(self)
         self.send_queue = RabbitMQQueue("preprocesed_twits", "rabbitmq")

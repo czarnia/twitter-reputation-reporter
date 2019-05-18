@@ -1,10 +1,10 @@
 import multiprocessing
 
 class DateAgregator(multiprocessing.Process):
-    def __init__(self, queue_name, rabbit_host, report_file_name):
+    def __init__(self):
         multiprocessing.Process.__init__(self)
-        self.rabbitmq_queue = RabbitMQQueue(queue_name, rabbit_host)
-        self.report_file_name = report_file_name
+        self.rabbitmq_queue = RabbitMQQueue("date_processed_twits", "rabbitmq")
+        self.report_file_name = "dates_report.csv"
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):

@@ -10,16 +10,16 @@ class TwitterReputationReporter(object):
         self.queue = RabbitMQQueue("raw_twits", "rabbitmq")
         self.workers = []
 
-        for i in range filter_parser_workers:
+        for i in range(filter_parser_workers):
             self.workers.append(FilterParser())
 
-        for i in range analyzer_workers:
-            self.workers.append(TwitterTextSentimentAnalyzer())
+        for i in range(analyzer_workers):
+            self.workers.append(TwitterTextSentimentAnalyzer(user_reduce_workers, date_reduce_workers))
 
-        for i in range user_reduce_workers:
+        for i in range(user_reduce_workers):
             self.workers.append(UserReducer())
 
-        for i in range date_reduce_workers:
+        for i in range(date_reduce_workers):
             self.workers.append(DateReducer())
 
         self.workers.append(DateAgregateWorker())
@@ -38,7 +38,7 @@ class TwitterReputationReporter(object):
 
 
 if __name__ == '__main__':
-    twits_file = int(os.environ['TWITS_FILE'])
+    twits_file = os.environ['TWITS_FILE']
     filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
     user_reduce_workers = int(os.environ['USER_REDUCER_WORKERS'])
