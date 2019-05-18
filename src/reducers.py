@@ -11,7 +11,7 @@ NEGATIVE_SCORE = -1
 class UserReducer(multiprocessing.Process):
     def __init__(self, id):
         multiprocessing.Process.__init__(self)
-        self.rabbitmq_queue = RabbitMQQueue("usr_twits%i".format(id), "rabbitmq")
+        self.rabbitmq_queue = RabbitMQQueue("usr_twits%i".format(id), 'rabbitmq')
         self.users = {}
         self.report_file_name = "user_report.csv"
 
@@ -40,8 +40,8 @@ class UserReducer(multiprocessing.Process):
 class DateReducer(multiprocessing.Process):
     def __init__(self, id):
         multiprocessing.Process.__init__(self)
-        self.receive_rabbitmq_queue = RabbitMQQueue("date_twits%i".format(id), "rabbitmq")
-        self.send_rabbitmq_queue = RabbitMQQueue("date_processed_twits", "rabbitmq")
+        self.receive_rabbitmq_queue = RabbitMQQueue("date_twits%i".format(id), 'rabbitmq')
+        self.send_rabbitmq_queue = RabbitMQQueue("date_processed_twits", 'rabbitmq')
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):

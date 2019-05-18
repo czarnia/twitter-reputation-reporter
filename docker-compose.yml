@@ -10,7 +10,7 @@ services:
     env_file:
       - config.env
     volumes:
-      - ./reports :/src/reports
+      - ./reports:/src/reports
     links:
       - rabbitmq
     depends_on:

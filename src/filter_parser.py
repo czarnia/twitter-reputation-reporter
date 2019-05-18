@@ -9,8 +9,8 @@ TEXT = 4
 class FilterParser(multiprocessing.Process):
     def __init__(self):
         multiprocessing.Process.__init__(self)
-        self.send_queue = RabbitMQQueue("preprocesed_twits", "rabbitmq")
-        self.receive_queue = RabbitMQQueue("raw_twits", "rabbitmq")
+        self.send_queue = RabbitMQQueue("preprocesed_twits", 'rabbitmq')
+        self.receive_queue = RabbitMQQueue("raw_twits", 'rabbitmq')
 
     def run(self):
         self.receive_queue.consume(self._callback)

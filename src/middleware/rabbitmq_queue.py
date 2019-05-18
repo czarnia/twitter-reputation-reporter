@@ -21,7 +21,7 @@ class RabbitMQQueue(object):
                               body=msg,
                               properties=pika.BasicProperties(delivery_mode = 2,))
 
-    def consume(self,callback):
+    def consume(self, callback):
     	self.channel.queue_declare(queue=self.queue,durable = True)
 
     	def _callback_wrapper(ch, method, properties, body):
@@ -32,12 +32,6 @@ class RabbitMQQueue(object):
 
     	self.tag = self.channel.basic_consume(queue=self.queue,on_message_callback=_callback_wrapper)
     	self.channel.start_consuming()
-
-    def consume(self, callback):
-        self.channel.queue_declare(queue=self.queue, durable=True)
-        self.tag = self.channel.basic_consume(
-            queue=self.queue, on_message_callback=self._callback_wrapper(callback))
-        self.channel.start_consuming()
 
     def send_eom(self):
         self.send(MSG_EOM)

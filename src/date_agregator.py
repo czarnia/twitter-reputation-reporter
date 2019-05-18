@@ -1,9 +1,10 @@
 import multiprocessing
+from middleware.rabbitmq_queue import RabbitMQQueue
 
 class DateAgregator(multiprocessing.Process):
     def __init__(self):
         multiprocessing.Process.__init__(self)
-        self.rabbitmq_queue = RabbitMQQueue("date_processed_twits", "rabbitmq")
+        self.rabbitmq_queue = RabbitMQQueue("date_processed_twits", 'rabbitmq')
         self.report_file_name = "dates_report.csv"
         self.dates = {}
 

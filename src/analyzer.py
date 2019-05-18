@@ -10,9 +10,9 @@ TEXT = 2
 class TwitterTextSentimentAnalyzer(multiprocessing.Process):
     def __init__(self, num_usr_workers, num_date_workers):
         multiprocessing.Process.__init__(self)
-        self.receive_queue = RabbitMQQueue("preprocesed_twits", "rabbitmq")
-        self.send_usr_queues = [ RabbitMQQueue("usr_twits%i".format(i), "rabbitmq") for i in range(num_usr_workers) ]
-        self.send_date_queues = [ RabbitMQQueue("date_twits%i".format(i), "rabbitmq") for i in range(num_date_workers) ]
+        self.receive_queue = RabbitMQQueue("preprocesed_twits", 'rabbitmq')
+        self.send_usr_queues = [ RabbitMQQueue("usr_twits%i".format(i), 'rabbitmq') for i in range(num_usr_workers) ]
+        self.send_date_queues = [ RabbitMQQueue("date_twits%i".format(i), 'rabbitmq') for i in range(num_date_workers) ]
 
     def _hash(value, max_range):
         return hash(value) % max_range

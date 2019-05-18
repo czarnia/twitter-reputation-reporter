@@ -2,12 +2,14 @@ import os
 
 from filter_parser import FilterParser
 from analyzer import TwitterTextSentimentAnalyzer
+from reducers import UserReducer, DateReducer
+from date_agregator import DateAgregator
 from middleware.rabbitmq_queue import RabbitMQQueue
 
 class TwitterReputationReporter(object):
     def __init__(self, file_path, filter_parser_workers, analyzer_workers, user_reduce_workers, date_reduce_workers):
         self.file_path = file_path
-        self.queue = RabbitMQQueue("raw_twits", "rabbitmq")
+        self.queue = RabbitMQQueue("raw_twits", 'rabbitmq')
         self.workers = []
 
         for i in range(filter_parser_workers):
@@ -17,12 +19,12 @@ class TwitterReputationReporter(object):
             self.workers.append(TwitterTextSentimentAnalyzer(user_reduce_workers, date_reduce_workers))
 
         for i in range(user_reduce_workers):
-            self.workers.append(UserReducer())
+            self.workers.append(UserReducer(i))
 
         for i in range(date_reduce_workers):
-            self.workers.append(DateReducer())
+            self.workers.append(DateReducer(i))
 
-        self.workers.append(DateAgregateWorker())
+        self.workers.append(DateAgregator())
 
     def start(self):
         for worker in self.workers:
