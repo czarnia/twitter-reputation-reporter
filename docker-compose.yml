@@ -1,0 +1,18 @@
+rabbitmq:
+  image: rabbitmq:3.8-rc-management-alpine
+  hostname: rabbitmq
+  ports:
+    - "15672:15672"
+    - "5672:5672"
+  environment:
+      - RABBITMQ_DEFAULT_USER=rabbitmquser
+      - RABBITMQ_DEFAULT_PASS=letmein
+
+twitter-reporter:
+  image: twitter_reporter
+  env_file:
+    - config.env
+  volumes:
+    - ./reports :/src/reports
+  links:
+    - rabbitmq
