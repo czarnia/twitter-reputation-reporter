@@ -13,7 +13,7 @@ class UserReducer(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
         self.rabbitmq_queue = RabbitMQQueue("usr_twits{}".format(id), 'rabbitmq')
         self.users = {}
-        self.report_file_name = "user_report.csv"
+        self.report_file_name = "/twitter_reporter/reports/user_report.csv"
 
     def _was_already_alerted(self, author_id):
         return (author_id in self.users and self.users[author_id] == ALERT_NUMBER)

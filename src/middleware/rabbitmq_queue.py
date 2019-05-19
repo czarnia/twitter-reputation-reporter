@@ -7,24 +7,22 @@ class RabbitMQQueue(object):
     def __init__(self, queue_name, rabbit_host):
         self.connection_host = rabbit_host
         self.queue = queue_name
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.connection_host))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.connection_host, heartbeat=600,
+                                       blocked_connection_timeout=300))
         self.channel = self.connection.channel()
+        self.channel.queue_declare(queue=self.queue, durable=True)
         self.tag = None
 
     def __exit__(self, *args):
         self.connection.close()
 
     def send(self, msg):
-        self.channel.queue_declare(queue=self.queue, durable=True)
-
         self.channel.basic_publish(exchange='',
                               routing_key=self.queue,
                               body=msg,
                               properties=pika.BasicProperties(delivery_mode = 2,))
 
     def consume(self, callback):
-        self.channel.queue_declare(queue=self.queue,durable = True)
-
         def _callback_wrapper(ch, method, properties, body):
             if body.decode('UTF-8') == MSG_EOM:
                 self._stop_consuming()
