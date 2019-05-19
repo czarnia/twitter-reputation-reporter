@@ -19,7 +19,7 @@ class UserReducer(multiprocessing.Process):
         return (author_id in self.users and self.users[author_id] == ALERT_NUMBER)
 
     def _callback(self, ch, method, properties, body):
-        body_values = body.split(",")
+        body_values = str(body).split(",")
         if body_values[SCORE] != NEGATIVE_SCORE or self._was_already_alerted(body_values[AUTHOR_ID]):
             return
 
@@ -45,7 +45,7 @@ class DateReducer(multiprocessing.Process):
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
-        body_values = body.split(",")
+        body_values = str(body).split(",")
 
         if not body_values[DATE] in self.dates:
             self.dates[body_values[DATE]] = { "positive" : 0, "negative" : 0 }
@@ -60,3 +60,4 @@ class DateReducer(multiprocessing.Process):
         self.receive_rabbitmq_queue.consume(self._callback)
         for date in self.dates:
             self.send_rabbitmq_queue.send("%s,%s,%s".format(date, self.dates[date]["positive"], self.dates[date]["negative"]))
+        self.send_rabbitmq_queue.send_eom()

@@ -35,6 +35,8 @@ class TwitterReputationReporter(object):
             for line in twits:
                 self.queue.send(line)
 
+        self.queue.send_eom()
+
         for worker in self.workers:
             worker.join()
 

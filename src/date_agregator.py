@@ -9,7 +9,7 @@ class DateAgregator(multiprocessing.Process):
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
-        body_values = body.split(",")
+        body_values = str(body).split(",")
 
         if not body_values[DATE] in self.dates:
             self.dates[body_values[DATE]] = { "positive" : 0, "negative" : 0 }
