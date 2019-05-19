@@ -6,13 +6,12 @@ services:
         - 15672:15672
 
   twitter-reporter:
-    image: twitter_reporter
+    image: twitter-reporter
     env_file:
       - config.env
     volumes:
-      - ./reports:/src/reports
+      - ./reports:/twitter_reporter/reports
     links:
       - rabbitmq
     depends_on:
         - rabbitmq
-    restart: on-failure

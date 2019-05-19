@@ -1,8 +1,4 @@
 #!/bin/bash
 
-cd ./src
-
-docker build -t twitter_reporter .
-
-cd ../
+docker build -t twitter-reporter -f src/Dockerfile .
 docker-compose up
