@@ -1,6 +1,10 @@
 import multiprocessing
 from middleware.rabbitmq_queue import RabbitMQQueue
 
+DATE = 0
+POSITIVES = 1
+NEGATIVES = 2
+
 class DateAgregator(multiprocessing.Process):
     def __init__(self):
         multiprocessing.Process.__init__(self)
@@ -9,23 +13,26 @@ class DateAgregator(multiprocessing.Process):
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
-        body_values = str(body).split(",")
+        #print("--------------DATE-AGREGATOR, recibo la linea: {}--------------".format(str(body)))
+        body_values = body.decode('UTF-8').split(",")
 
         if not body_values[DATE] in self.dates:
             self.dates[body_values[DATE]] = { "positive" : 0, "negative" : 0 }
 
-        if body_values[SCORE] == NEGATIVE_SCORE:
-            self.dates[body_values[DATE]]["negative"] += 1
-        else:
-            self.dates[body_values[DATE]]["positive"] += 1
+        self.dates[body_values[DATE]]["negative"] += int(body_values[NEGATIVES])
+        self.dates[body_values[DATE]]["positive"] += int(body_values[POSITIVES])
 
     def run(self):
         self.rabbitmq_queue.consume(self._callback)
 
+        print("")
+        print("--------------DATE-AGREGATOR, TERMINO DE CONSUMIR--------------")
         dates = list(self.dates.keys())
         dates.sort()
 
         with open(self.report_file_name, mode='w') as report:
             report.write("DATE, POSITIVES, NEGATIVES\n")
             for date in dates:
-                report.write("%s, %s, %s\n".format(date, self.dates[date]["positive"], self.dates[date]["negative"]))
+                report.write("{},{},{}\n".format(date, self.dates[date]["positive"], self.dates[date]["negative"]))
+
+        print("--------------DATE-AGREGATOR, ESCRIBI EL ARCHIVO--------------")

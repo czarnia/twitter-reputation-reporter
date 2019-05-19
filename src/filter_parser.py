@@ -1,4 +1,6 @@
 import multiprocessing
+from dateutil.parser import parse
+
 from middleware.rabbitmq_queue import RabbitMQQueue
 
 AUTHOR_ID = 1
@@ -9,19 +11,26 @@ TEXT = 4
 NUM_COLUMS = 7
 
 class FilterParser(multiprocessing.Process):
-    def __init__(self):
+    def __init__(self, next_workers_number):
         multiprocessing.Process.__init__(self)
+        self.next_workers_number = next_workers_number
         self.send_queue = RabbitMQQueue("preprocesed_twits", 'rabbitmq')
         self.receive_queue = RabbitMQQueue("raw_twits", 'rabbitmq')
 
     def run(self):
         self.receive_queue.consume(self._callback)
-        self.send_queue.send_eom()
+        print("")
+        print("--------------FILTER-PARSER, TERMINO DE CONSUMIR--------------")
+        for i in range(self.next_workers_number):
+            self.send_queue.send_eom()
+        print("--------------FILTER-PARSER, ENVIO EOM--------------")
 
     def _callback(self, ch, method, properties, body):
-        body_values = str(body).rstrip().split(",")
+        #print("--------------FILTER-PARSER, recibo la linea: {}--------------".format(body.decode('UTF-8')))
+        body_values = body.decode('UTF-8').rstrip().split(",")
 
         if (len(body_values) != NUM_COLUMS) or (body_values[INBOUND] != "True"):
             return
 
-        self.send_queue.send("%s,%s,%s".format(body_values[AUTHOR_ID], body_values[CREATED_AT], body_values[TEXT]))
+        day = str(parse(body_values[CREATED_AT]).date())
+        self.send_queue.send("{},{},{}".format(body_values[AUTHOR_ID], day, body_values[TEXT]))

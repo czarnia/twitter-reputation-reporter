@@ -10,10 +10,11 @@ class TwitterReputationReporter(object):
     def __init__(self, file_path, filter_parser_workers, analyzer_workers, user_reduce_workers, date_reduce_workers):
         self.file_path = file_path
         self.queue = RabbitMQQueue("raw_twits", 'rabbitmq')
+        self.next_workers_number = filter_parser_workers
         self.workers = []
 
         for i in range(filter_parser_workers):
-            self.workers.append(FilterParser())
+            self.workers.append(FilterParser(analyzer_workers))
 
         for i in range(analyzer_workers):
             self.workers.append(TwitterTextSentimentAnalyzer(user_reduce_workers, date_reduce_workers))
@@ -33,12 +34,21 @@ class TwitterReputationReporter(object):
         with open(self.file_path, "r") as twits:
             next(twits) #avoid header
             for line in twits:
+                #print("--------------MAIN, envio la linea: {}--------------".format(line))
                 self.queue.send(line)
 
-        self.queue.send_eom()
+        print("")
+        print("--------------MAIN, TERMINO DE ENVIAR--------------")
 
+        for i in range(self.next_workers_number):
+            self.queue.send_eom()
+
+        print("")
+        print("--------------MAIN, ENVIO EOM--------------")
         for worker in self.workers:
             worker.join()
+        print("")
+        print("-------------------MAIN, TERMINE-----------------------")
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ NEGATIVE_SCORE = -1
 class UserReducer(multiprocessing.Process):
     def __init__(self, id):
         multiprocessing.Process.__init__(self)
-        self.rabbitmq_queue = RabbitMQQueue("usr_twits%i".format(id), 'rabbitmq')
+        self.rabbitmq_queue = RabbitMQQueue("usr_twits{}".format(id), 'rabbitmq')
         self.users = {}
         self.report_file_name = "user_report.csv"
 
@@ -19,6 +19,7 @@ class UserReducer(multiprocessing.Process):
         return (author_id in self.users and self.users[author_id] == ALERT_NUMBER)
 
     def _callback(self, ch, method, properties, body):
+        #print("--------------USER-REDUCER, recibo la linea: {}--------------".format(str(body)))
         body_values = str(body).split(",")
         if body_values[SCORE] != NEGATIVE_SCORE or self._was_already_alerted(body_values[AUTHOR_ID]):
             return
@@ -36,16 +37,18 @@ class UserReducer(multiprocessing.Process):
 
     def run(self):
         self.rabbitmq_queue.consume(self._callback)
+        print("--------------USER-REDUCER, TERMINO DE CONSUMIR--------------")
 
 class DateReducer(multiprocessing.Process):
     def __init__(self, id):
         multiprocessing.Process.__init__(self)
-        self.receive_rabbitmq_queue = RabbitMQQueue("date_twits%i".format(id), 'rabbitmq')
+        self.receive_rabbitmq_queue = RabbitMQQueue("date_twits{}".format(id), 'rabbitmq')
         self.send_rabbitmq_queue = RabbitMQQueue("date_processed_twits", 'rabbitmq')
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
-        body_values = str(body).split(",")
+        #print("--------------DATE-REDUCER, recibo la linea: {}--------------".format(body.decode('UTF-8')))
+        body_values = body.decode('UTF-8').split(",")
 
         if not body_values[DATE] in self.dates:
             self.dates[body_values[DATE]] = { "positive" : 0, "negative" : 0 }
@@ -58,6 +61,9 @@ class DateReducer(multiprocessing.Process):
 
     def run(self):
         self.receive_rabbitmq_queue.consume(self._callback)
+        print("")
+        print("--------------DATE-REDUCER, TERMINO DE CONSUMIR--------------")
         for date in self.dates:
-            self.send_rabbitmq_queue.send("%s,%s,%s".format(date, self.dates[date]["positive"], self.dates[date]["negative"]))
+            self.send_rabbitmq_queue.send("{},{},{}".format(date, self.dates[date]["positive"], self.dates[date]["negative"]))
         self.send_rabbitmq_queue.send_eom()
+        print("--------------DATE-REDUCER, ENVIO EL EOM--------------")

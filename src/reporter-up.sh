@@ -1,4 +1,4 @@
 #!/bin/sh
 
-sleep 20
+sleep 30
 python3 -u main.py

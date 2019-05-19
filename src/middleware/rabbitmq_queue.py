@@ -1,4 +1,5 @@
 import pika
+import requests
 
 MSG_EOM = "None"
 
@@ -22,16 +23,19 @@ class RabbitMQQueue(object):
                               properties=pika.BasicProperties(delivery_mode = 2,))
 
     def consume(self, callback):
-    	self.channel.queue_declare(queue=self.queue,durable = True)
+        self.channel.queue_declare(queue=self.queue,durable = True)
 
-    	def _callback_wrapper(ch, method, properties, body):
-    		if body == MSG_EOM:
-    			self._stop_consuming()
-    		callback(ch,method,properties,body)
-    		ch.basic_ack(delivery_tag=method.delivery_tag)
+        def _callback_wrapper(ch, method, properties, body):
+            if body.decode('UTF-8') == MSG_EOM:
+                self._stop_consuming()
+                print("")
+                print("--------------RabbitMQQueue, MANDO STOP_CONSUMING--------------")
+                return
+            callback(ch,method,properties,body)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    	self.tag = self.channel.basic_consume(queue=self.queue,on_message_callback=_callback_wrapper)
-    	self.channel.start_consuming()
+        self.tag = self.channel.basic_consume(queue=self.queue,on_message_callback=_callback_wrapper)
+        self.channel.start_consuming()
 
     def send_eom(self):
         self.send(MSG_EOM)
