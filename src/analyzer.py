@@ -6,6 +6,12 @@ AUTHOR_ID = 0
 CREATED_AT = 1
 TEXT = 2
 
+BASE_NEGATIVE_SCORE = -0.5
+BASE_POSITIVE_SCORE = 0.5
+
+NEGATIVE_SCORE = -1
+POSITIVE_SCORE = 1
+
 
 class TwitterTextSentimentAnalyzer(multiprocessing.Process):
     def __init__(self, num_usr_workers, num_date_workers):
@@ -17,10 +23,21 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
     def _hash(self, value, max_range):
         return hash(value) % max_range
 
+    def _is_score_neutral(self, score):
+        return (score < BASE_POSITIVE_SCORE and score > BASE_NEGATIVE_SCORE)
+
+    def _map_score(self, score):
+        return POSITIVE_SCORE if score >= BASE_POSITIVE_SCORE else NEGATIVE_SCORE
+
     def _callback(self, ch, method, properties, body):
         sentiment_analyzer = SentimentIntensityAnalyzer()
         body_values = body.decode('UTF-8').split(",")
         score = sentiment_analyzer.polarity_scores(body_values[TEXT])['compound']
+
+        if self._is_score_neutral(score):
+            return
+
+        score = self._map_score(score)
 
         usr_queue = self.send_usr_queues[self._hash(body_values[AUTHOR_ID], len(self.send_usr_queues))]
         usr_queue.send("{},{}".format(body_values[AUTHOR_ID], score))
@@ -31,11 +48,7 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
     def run(self):
         self.receive_queue.consume(self._callback)
 
-        print("")
-        print("--------------ANALYZER, TERMINO DE CONSUMIR--------------")
         for queu in self.send_usr_queues:
             queu.send_eom()
         for queu in self.send_date_queues:
             queu.send_eom()
-        print("")
-        print("--------------ANALYZER, ENVIO LOS EOM--------------")

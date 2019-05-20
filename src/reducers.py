@@ -11,6 +11,7 @@ NEGATIVE_SCORE = -1
 class UserReducer(multiprocessing.Process):
     def __init__(self, id):
         multiprocessing.Process.__init__(self)
+        self.id = id
         self.rabbitmq_queue = RabbitMQQueue("usr_twits{}".format(id), 'rabbitmq')
         self.users = {}
         self.report_file_name = "/twitter_reporter/reports/user_report.csv"
@@ -19,23 +20,29 @@ class UserReducer(multiprocessing.Process):
         return (author_id in self.users and self.users[author_id] == ALERT_NUMBER)
 
     def _callback(self, ch, method, properties, body):
-        #print("--------------USER-REDUCER, recibo la linea: {}--------------".format(str(body)))
-        body_values = str(body).split(",")
-        if body_values[SCORE] != NEGATIVE_SCORE or self._was_already_alerted(body_values[AUTHOR_ID]):
+        print("--------------USER-REDUCER, recibo la linea: {}--------------".format(str(body)))
+        body_values = body.decode('UTF-8').split(",")
+        print("ANTES DEL IF")
+        if int(body_values[SCORE]) != NEGATIVE_SCORE or self._was_already_alerted(body_values[AUTHOR_ID]):
             return
+        print("DESPUES DEL IF")
 
         if body_values[AUTHOR_ID] in self.users:
-            self.users[AUTHOR_ID] += 1
+            self.users[body_values[AUTHOR_ID]] += 1
         else:
-            self.users[AUTHOR_ID] = 1
+            self.users[body_values[AUTHOR_ID]] = 1
 
-        if body_values[AUTHOR_ID] == ALERT_NUMBER:
+        if self.users[body_values[AUTHOR_ID]] == ALERT_NUMBER:
             with open(self.report_file_name, mode='a') as report:
                 fcntl.flock(report, fcntl.LOCK_EX)
-                report.write("%s\n".format(body_values[AUTHOR_ID]))
+                report.write("{}\n".format(body_values[AUTHOR_ID]))
                 fcntl.flock(report, fcntl.LOCK_UN)
+        print("")
+        print("--------------USER-REDUCER, estado final: {}--------------".format(self.users))
 
     def run(self):
+        print("")
+        print("--------------USER-REDUCER, MI COLA ES usr_twits{}--------------".format(self.id))
         self.rabbitmq_queue.consume(self._callback)
         print("--------------USER-REDUCER, TERMINO DE CONSUMIR--------------")
 
@@ -47,7 +54,6 @@ class DateReducer(multiprocessing.Process):
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
-        #print("--------------DATE-REDUCER, recibo la linea: {}--------------".format(body.decode('UTF-8')))
         body_values = body.decode('UTF-8').split(",")
 
         if not body_values[DATE] in self.dates:
@@ -61,9 +67,9 @@ class DateReducer(multiprocessing.Process):
 
     def run(self):
         self.receive_rabbitmq_queue.consume(self._callback)
-        print("")
-        print("--------------DATE-REDUCER, TERMINO DE CONSUMIR--------------")
         for date in self.dates:
             self.send_rabbitmq_queue.send("{},{},{}".format(date, self.dates[date]["positive"], self.dates[date]["negative"]))
         self.send_rabbitmq_queue.send_eom()
-        print("--------------DATE-REDUCER, ENVIO EL EOM--------------")
+        print("")
+        print("------------------DATE REDUCER {}-------------------".format(self.dates))
+        print("")

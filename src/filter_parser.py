@@ -19,14 +19,10 @@ class FilterParser(multiprocessing.Process):
 
     def run(self):
         self.receive_queue.consume(self._callback)
-        print("")
-        print("--------------FILTER-PARSER, TERMINO DE CONSUMIR--------------")
         for i in range(self.next_workers_number):
             self.send_queue.send_eom()
-        print("--------------FILTER-PARSER, ENVIO EOM--------------")
 
     def _callback(self, ch, method, properties, body):
-        #print("--------------FILTER-PARSER, recibo la linea: {}--------------".format(body.decode('UTF-8')))
         body_values = body.decode('UTF-8').rstrip().split(",")
 
         if (len(body_values) != NUM_COLUMS) or (body_values[INBOUND] != "True"):

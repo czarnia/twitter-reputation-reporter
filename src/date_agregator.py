@@ -13,7 +13,7 @@ class DateAgregator(multiprocessing.Process):
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
-        #print("--------------DATE-AGREGATOR, recibo la linea: {}--------------".format(str(body)))
+        print("------------DATE AGREGATOR ME LLEGO: {}-------------".format(body.decode('UTF-8')))
         body_values = body.decode('UTF-8').split(",")
 
         if not body_values[DATE] in self.dates:
@@ -25,8 +25,6 @@ class DateAgregator(multiprocessing.Process):
     def run(self):
         self.rabbitmq_queue.consume(self._callback)
 
-        print("")
-        print("--------------DATE-AGREGATOR, TERMINO DE CONSUMIR--------------")
         dates = list(self.dates.keys())
         dates.sort()
 
@@ -34,5 +32,3 @@ class DateAgregator(multiprocessing.Process):
             report.write("DATE, POSITIVES, NEGATIVES\n")
             for date in dates:
                 report.write("{},{},{}\n".format(date, self.dates[date]["positive"], self.dates[date]["negative"]))
-
-        print("--------------DATE-AGREGATOR, ESCRIBI EL ARCHIVO--------------")
