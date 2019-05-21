@@ -18,11 +18,11 @@ class FilterParser(multiprocessing.Process):
         self.receive_queue = RabbitMQQueue("raw_twits{}".format(id), 'rabbitmq')
 
     def run(self):
-        print("-------------FILTER, EMPIEZO--------------")
+        #print("-------------FILTER, EMPIEZO--------------")
         self.receive_queue.consume(self._callback)
         self.send_queues.send_eom()
-        print("-------------FILTER, TERMINO--------------")
-        print("\n")
+        #print("-------------FILTER, TERMINO--------------")
+        #print("")
 
     def _callback(self, ch, method, properties, body):
         #print("-------------------FILTER, RECIBO LA LINEA {}---------------------".format(body.decode('UTF-8')))
