@@ -39,6 +39,9 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
 
         score = self._map_score(score)
 
+        print("--------------ANALYZER, ENVIO: {}--------------".format("{},{}".format(body_values[CREATED_AT], score)))
+        print("--------------ANALYZER, ENVIO: {}--------------".format("{},{}".format(body_values[AUTHOR_ID], score)))
+
         usr_queue = self.send_usr_queues[self._hash(body_values[AUTHOR_ID], len(self.send_usr_queues))]
         usr_queue.send("{},{}".format(body_values[AUTHOR_ID], score))
 

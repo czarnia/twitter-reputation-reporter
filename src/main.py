@@ -25,7 +25,7 @@ class TwitterReputationReporter(object):
         for i in range(date_reduce_workers):
             self.workers.append(DateReducer(i))
 
-        self.workers.append(DateAgregator())
+        self.workers.append(DateAgregator(date_reduce_workers))
 
     def start(self):
         for worker in self.workers:
@@ -37,18 +37,18 @@ class TwitterReputationReporter(object):
                 #print("--------------MAIN, envio la linea: {}--------------".format(line))
                 self.queue.send(line)
 
-        print("")
-        print("--------------MAIN, TERMINO DE ENVIAR--------------")
+        #print("")
+        #print("--------------MAIN, TERMINO DE ENVIAR--------------")
 
         for i in range(self.next_workers_number):
             self.queue.send_eom()
 
-        print("")
-        print("--------------MAIN, ENVIO EOM--------------")
+        #print("")
+        #print("--------------MAIN, ENVIO EOM--------------")
         for worker in self.workers:
             worker.join()
-        print("")
-        print("-------------------MAIN, TERMINE-----------------------")
+        #print("")
+        #print("-------------------MAIN, TERMINE-----------------------")
 
 
 if __name__ == '__main__':

@@ -22,10 +22,10 @@ class UserReducer(multiprocessing.Process):
     def _callback(self, ch, method, properties, body):
         print("--------------USER-REDUCER, recibo la linea: {}--------------".format(str(body)))
         body_values = body.decode('UTF-8').split(",")
-        print("ANTES DEL IF")
+        #print("ANTES DEL IF")
         if int(body_values[SCORE]) != NEGATIVE_SCORE or self._was_already_alerted(body_values[AUTHOR_ID]):
             return
-        print("DESPUES DEL IF")
+        #print("DESPUES DEL IF")
 
         if body_values[AUTHOR_ID] in self.users:
             self.users[body_values[AUTHOR_ID]] += 1
@@ -37,14 +37,14 @@ class UserReducer(multiprocessing.Process):
                 fcntl.flock(report, fcntl.LOCK_EX)
                 report.write("{}\n".format(body_values[AUTHOR_ID]))
                 fcntl.flock(report, fcntl.LOCK_UN)
-        print("")
-        print("--------------USER-REDUCER, estado final: {}--------------".format(self.users))
 
     def run(self):
-        print("")
-        print("--------------USER-REDUCER, MI COLA ES usr_twits{}--------------".format(self.id))
+        #print("")
+        #print("--------------USER-REDUCER, MI COLA ES usr_twits{}--------------".format(self.id))
         self.rabbitmq_queue.consume(self._callback)
-        print("--------------USER-REDUCER, TERMINO DE CONSUMIR--------------")
+        #print("")
+        #print("--------------USER-REDUCER, estado final: {}--------------".format(self.users))
+        #print("--------------USER-REDUCER, TERMINO DE CONSUMIR--------------")
 
 class DateReducer(multiprocessing.Process):
     def __init__(self, id):
@@ -54,6 +54,7 @@ class DateReducer(multiprocessing.Process):
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
+        print("--------------DATE-REDUCER, recibo la linea: {}--------------".format(str(body)))
         body_values = body.decode('UTF-8').split(",")
 
         if not body_values[DATE] in self.dates:
@@ -70,6 +71,6 @@ class DateReducer(multiprocessing.Process):
         for date in self.dates:
             self.send_rabbitmq_queue.send("{},{},{}".format(date, self.dates[date]["positive"], self.dates[date]["negative"]))
         self.send_rabbitmq_queue.send_eom()
-        print("")
-        print("------------------DATE REDUCER {}-------------------".format(self.dates))
-        print("")
+        #print("")
+        #print("------------------DATE REDUCER {}-------------------".format(self.dates))
+        #print("")
