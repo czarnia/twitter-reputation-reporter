@@ -14,14 +14,18 @@ BASE_POSITIVE_SCORE = 0.5
 NEGATIVE_SCORE = -1
 POSITIVE_SCORE = 1
 
+RECEIVE_QUEUE_NAME = "preprocesed_twits"
+SEND_USR_QUEUE_NAME = "usr_twits"
+SEND_DATE_QUEUE_NAME = "date_twits"
+
 
 class TwitterTextSentimentAnalyzer(multiprocessing.Process):
-    def __init__(self, id, num_filter_workers, num_usr_workers, num_date_workers):
+    def __init__(self, id, rabbitmq_host, num_filter_workers, num_usr_workers, num_date_workers):
         multiprocessing.Process.__init__(self)
         self.num_filter_workers = num_filter_workers
-        self.receive_queue = RabbitMQQueue("preprocesed_twits{}".format(id), 'rabbitmq')
-        self.send_usr_queues = RabbitMQQueues("usr_twits", 'rabbitmq', num_usr_workers)
-        self.send_date_queues = RabbitMQQueues("date_twits", 'rabbitmq', num_date_workers)
+        self.receive_queue = RabbitMQQueue("{}{}".format(RECEIVE_QUEUE_NAME, id), rabbitmq_host)
+        self.send_usr_queues = RabbitMQQueues(SEND_USR_QUEUE_NAME, rabbitmq_host, num_usr_workers)
+        self.send_date_queues = RabbitMQQueues(SEND_DATE_QUEUE_NAME, rabbitmq_host, num_date_workers)
 
     def _is_score_neutral(self, score):
         return (score < BASE_POSITIVE_SCORE and score > BASE_NEGATIVE_SCORE)

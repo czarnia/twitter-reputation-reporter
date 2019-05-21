@@ -11,11 +11,16 @@ TEXT = 4
 
 NUM_COLUMS = 7
 
+IS_CUSTOMER = "True"
+
+RECEIVE_QUEUE_NAME = "preprocesed_twits"
+SEND_QUEUE_NAME = "raw_twits"
+
 class FilterParser(multiprocessing.Process):
-    def __init__(self, id, next_workers_number):
+    def __init__(self, id, rabbitmq_host, next_workers_number):
         multiprocessing.Process.__init__(self)
-        self.send_queues = RabbitMQQueues("preprocesed_twits", 'rabbitmq', next_workers_number)
-        self.receive_queue = RabbitMQQueue("raw_twits{}".format(id), 'rabbitmq')
+        self.send_queues = RabbitMQQueues(RECEIVE_QUEUE_NAME, rabbitmq_host, next_workers_number)
+        self.receive_queue = RabbitMQQueue("{}{}".format(SEND_QUEUE_NAME, id), rabbitmq_host)
 
     def run(self):
         self.receive_queue.consume(self._callback)
@@ -24,7 +29,7 @@ class FilterParser(multiprocessing.Process):
     def _callback(self, ch, method, properties, body):
         body_values = body.decode('UTF-8').rstrip().split(",")
 
-        if (len(body_values) != NUM_COLUMS) or (body_values[INBOUND] != "True"):
+        if (len(body_values) != NUM_COLUMS) or (body_values[INBOUND] != IS_CUSTOMER):
             return
 
         day = str(parse(body_values[CREATED_AT]).date())

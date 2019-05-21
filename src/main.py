@@ -6,25 +6,28 @@ from reducers import UserReducer, DateReducer
 from date_agregator import DateAgregator
 from middleware.rabbitmq_queues import RabbitMQQueues
 
+SEND_QUEUE_NAME = "raw_twits"
+RABBITMQ_HOST = 'rabbitmq'
+
 class TwitterReputationReporter(object):
-    def __init__(self, file_path, filter_parser_workers, analyzer_workers, user_reduce_workers, date_reduce_workers):
+    def __init__(self, rabbitmq_host, file_path, filter_parser_workers, analyzer_workers, user_reduce_workers, date_reduce_workers):
         self.file_path = file_path
-        self.queues = RabbitMQQueues("raw_twits", 'rabbitmq', filter_parser_workers)
+        self.queues = RabbitMQQueues(SEND_QUEUE_NAME, RABBITMQ_HOST, filter_parser_workers)
         self.workers = []
 
         for i in range(filter_parser_workers):
-            self.workers.append(FilterParser(i, analyzer_workers))
+            self.workers.append(FilterParser(i, rabbitmq_host, analyzer_workers))
 
         for i in range(analyzer_workers):
-            self.workers.append(TwitterTextSentimentAnalyzer(i, filter_parser_workers, user_reduce_workers, date_reduce_workers))
+            self.workers.append(TwitterTextSentimentAnalyzer(i, rabbitmq_host, filter_parser_workers, user_reduce_workers, date_reduce_workers))
 
         for i in range(user_reduce_workers):
-            self.workers.append(UserReducer(i, analyzer_workers))
+            self.workers.append(UserReducer(i, rabbitmq_host, analyzer_workers))
 
         for i in range(date_reduce_workers):
-            self.workers.append(DateReducer(i, analyzer_workers))
+            self.workers.append(DateReducer(i, rabbitmq_host, analyzer_workers))
 
-        self.workers.append(DateAgregator(date_reduce_workers))
+        self.workers.append(DateAgregator(rabbitmq_host, date_reduce_workers))
 
     def start(self):
         for worker in self.workers:
@@ -48,5 +51,5 @@ if __name__ == '__main__':
     user_reduce_workers = int(os.environ['USER_REDUCER_WORKERS'])
     date_reduce_workers = int(os.environ['DATE_REDUCER_WORKERS'])
 
-    reporter = TwitterReputationReporter(twits_file, filter_parser_workers, analyzer_workers, user_reduce_workers, date_reduce_workers)
+    reporter = TwitterReputationReporter(RABBITMQ_HOST, twits_file, filter_parser_workers, analyzer_workers, user_reduce_workers, date_reduce_workers)
     reporter.start()
