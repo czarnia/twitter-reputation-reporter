@@ -30,7 +30,6 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
         return POSITIVE_SCORE if score >= BASE_POSITIVE_SCORE else NEGATIVE_SCORE
 
     def _callback(self, ch, method, properties, body):
-        #print("-------------------Analyzer, recibo la linea {}-------------------".format(body.decode('UTF-8')))
         sentiment_analyzer = SentimentIntensityAnalyzer()
         body_values = body.decode('UTF-8').split(",")
         score = sentiment_analyzer.polarity_scores(body_values[TEXT])['compound']
@@ -40,16 +39,10 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
 
         score = self._map_score(score)
 
-        #print("--------------ANALYZER, ENVIO: {}--------------".format("{},{}".format(body_values[CREATED_AT], score)))
-        #print("--------------ANALYZER, ENVIO: {}--------------".format("{},{}".format(body_values[AUTHOR_ID], score)))
-
         self.send_usr_queues.send("{},{}".format(body_values[AUTHOR_ID], score), body_values[AUTHOR_ID])
         self.send_date_queues.send("{},{}".format(body_values[CREATED_AT], score), body_values[AUTHOR_ID])
 
     def run(self):
-        #print("--------------------ANALYZER, EMPIEZO----------------")
         self.receive_queue.consume(self._callback, self.num_filter_workers)
         self.send_usr_queues.send_eom()
         self.send_date_queues.send_eom()
-        #print("--------------------ANALYZER, TERMINO----------------")
-        print("\n")

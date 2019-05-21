@@ -28,11 +28,8 @@ class RabbitMQQueue(object):
         def _callback_wrapper(ch, method, properties, body):
             if body.decode('UTF-8') == MSG_EOM:
                 self.number_of_current_producers -= 1
-                #print("------------------RESTO UNO, TENGO {}---------------------".format(self.number_of_current_producers))
                 if self.number_of_current_producers == 0:
                     self._stop_consuming()
-                    #print("")
-                    #print("--------------RabbitMQQueue, MANDO STOP_CONSUMING--------------")
                 return
 
             callback(ch,method,properties,body)

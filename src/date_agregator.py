@@ -14,7 +14,6 @@ class DateAgregator(multiprocessing.Process):
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
-        #print("------------DATE AGREGATOR ME LLEGO: {}-------------".format(body.decode('UTF-8')))
         body_values = body.decode('UTF-8').split(",")
 
         if not body_values[DATE] in self.dates:

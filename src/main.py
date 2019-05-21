@@ -33,20 +33,12 @@ class TwitterReputationReporter(object):
         with open(self.file_path, "r") as twits:
             next(twits) #avoid header
             for line in twits:
-                #print("--------------MAIN, envio la linea: {}--------------".format(line))
                 self.queues.send(line, line[0])
-
-        #print("")
-        #print("--------------MAIN, TERMINO DE ENVIAR--------------")
 
         self.queues.send_eom()
 
-        #print("")
-        #print("--------------MAIN, ENVIO EOM--------------")
         for worker in self.workers:
             worker.join()
-        #print("")
-        #print("-------------------MAIN, TERMINE-----------------------")
 
 
 if __name__ == '__main__':
