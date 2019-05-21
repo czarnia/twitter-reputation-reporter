@@ -1,6 +1,8 @@
 import multiprocessing
-from middleware.rabbitmq_queue import RabbitMQQueue
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+from middleware.rabbitmq_queue import RabbitMQQueue
+from middleware.rabbitmq_queues import RabbitMQQueues
 
 AUTHOR_ID = 0
 CREATED_AT = 1
@@ -14,14 +16,12 @@ POSITIVE_SCORE = 1
 
 
 class TwitterTextSentimentAnalyzer(multiprocessing.Process):
-    def __init__(self, num_usr_workers, num_date_workers):
+    def __init__(self, id, num_filter_workers, num_usr_workers, num_date_workers):
         multiprocessing.Process.__init__(self)
-        self.receive_queue = RabbitMQQueue("preprocesed_twits", 'rabbitmq')
-        self.send_usr_queues = [ RabbitMQQueue("usr_twits{}".format(i), 'rabbitmq') for i in range(num_usr_workers) ]
-        self.send_date_queues = [ RabbitMQQueue("date_twits{}".format(i), 'rabbitmq') for i in range(num_date_workers) ]
-
-    def _hash(self, value, max_range):
-        return hash(value) % max_range
+        self.num_filter_workers = num_filter_workers
+        self.receive_queue = RabbitMQQueue("preprocesed_twits{}".format(id), 'rabbitmq')
+        self.send_usr_queues = RabbitMQQueues("usr_twits", 'rabbitmq', num_usr_workers)
+        self.send_date_queues = RabbitMQQueues("date_twits", 'rabbitmq', num_date_workers)
 
     def _is_score_neutral(self, score):
         return (score < BASE_POSITIVE_SCORE and score > BASE_NEGATIVE_SCORE)
@@ -30,6 +30,7 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
         return POSITIVE_SCORE if score >= BASE_POSITIVE_SCORE else NEGATIVE_SCORE
 
     def _callback(self, ch, method, properties, body):
+        print("-------------------Analyzer, recibo la linea {}-------------------".format(body.decode('UTF-8')))
         sentiment_analyzer = SentimentIntensityAnalyzer()
         body_values = body.decode('UTF-8').split(",")
         score = sentiment_analyzer.polarity_scores(body_values[TEXT])['compound']
@@ -42,16 +43,13 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
         print("--------------ANALYZER, ENVIO: {}--------------".format("{},{}".format(body_values[CREATED_AT], score)))
         print("--------------ANALYZER, ENVIO: {}--------------".format("{},{}".format(body_values[AUTHOR_ID], score)))
 
-        usr_queue = self.send_usr_queues[self._hash(body_values[AUTHOR_ID], len(self.send_usr_queues))]
-        usr_queue.send("{},{}".format(body_values[AUTHOR_ID], score))
-
-        date_queue = self.send_date_queues[self._hash(body_values[AUTHOR_ID], len(self.send_date_queues))]
-        date_queue.send("{},{}".format(body_values[CREATED_AT], score))
+        self.send_usr_queues.send("{},{}".format(body_values[AUTHOR_ID], score), body_values[AUTHOR_ID])
+        self.send_date_queues.send("{},{}".format(body_values[CREATED_AT], score), body_values[AUTHOR_ID])
 
     def run(self):
-        self.receive_queue.consume(self._callback)
-
-        for queu in self.send_usr_queues:
-            queu.send_eom()
-        for queu in self.send_date_queues:
-            queu.send_eom()
+        print("--------------------ANALYZER, EMPIEZO----------------")
+        self.receive_queue.consume(self._callback, self.num_filter_workers)
+        self.send_usr_queues.send_eom()
+        self.send_date_queues.send_eom()
+        print("--------------------ANALYZER, TERMINO----------------")
+        print("\n")

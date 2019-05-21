@@ -4,26 +4,25 @@ from filter_parser import FilterParser
 from analyzer import TwitterTextSentimentAnalyzer
 from reducers import UserReducer, DateReducer
 from date_agregator import DateAgregator
-from middleware.rabbitmq_queue import RabbitMQQueue
+from middleware.rabbitmq_queues import RabbitMQQueues
 
 class TwitterReputationReporter(object):
     def __init__(self, file_path, filter_parser_workers, analyzer_workers, user_reduce_workers, date_reduce_workers):
         self.file_path = file_path
-        self.queue = RabbitMQQueue("raw_twits", 'rabbitmq')
-        self.next_workers_number = filter_parser_workers
+        self.queues = RabbitMQQueues("raw_twits", 'rabbitmq', filter_parser_workers)
         self.workers = []
 
         for i in range(filter_parser_workers):
-            self.workers.append(FilterParser(analyzer_workers))
+            self.workers.append(FilterParser(i, analyzer_workers))
 
         for i in range(analyzer_workers):
-            self.workers.append(TwitterTextSentimentAnalyzer(user_reduce_workers, date_reduce_workers))
+            self.workers.append(TwitterTextSentimentAnalyzer(i, filter_parser_workers, user_reduce_workers, date_reduce_workers))
 
         for i in range(user_reduce_workers):
-            self.workers.append(UserReducer(i))
+            self.workers.append(UserReducer(i, analyzer_workers))
 
         for i in range(date_reduce_workers):
-            self.workers.append(DateReducer(i))
+            self.workers.append(DateReducer(i, analyzer_workers))
 
         self.workers.append(DateAgregator(date_reduce_workers))
 
@@ -35,20 +34,19 @@ class TwitterReputationReporter(object):
             next(twits) #avoid header
             for line in twits:
                 #print("--------------MAIN, envio la linea: {}--------------".format(line))
-                self.queue.send(line)
+                self.queues.send(line, line[0])
 
-        #print("")
-        #print("--------------MAIN, TERMINO DE ENVIAR--------------")
+        print("")
+        print("--------------MAIN, TERMINO DE ENVIAR--------------")
 
-        for i in range(self.next_workers_number):
-            self.queue.send_eom()
+        self.queues.send_eom()
 
-        #print("")
-        #print("--------------MAIN, ENVIO EOM--------------")
+        print("")
+        print("--------------MAIN, ENVIO EOM--------------")
         for worker in self.workers:
             worker.join()
-        #print("")
-        #print("-------------------MAIN, TERMINE-----------------------")
+        print("")
+        print("-------------------MAIN, TERMINE-----------------------")
 
 
 if __name__ == '__main__':

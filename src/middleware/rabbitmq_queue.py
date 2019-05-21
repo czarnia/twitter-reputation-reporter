@@ -1,5 +1,4 @@
 import pika
-import requests
 
 MSG_EOM = "None"
 
@@ -25,20 +24,20 @@ class RabbitMQQueue(object):
 
     def consume(self, callback, number_of_producers = 1):
         self.number_of_current_producers = number_of_producers
+
         def _callback_wrapper(ch, method, properties, body):
             if body.decode('UTF-8') == MSG_EOM:
                 self.number_of_current_producers -= 1
                 #print("------------------RESTO UNO, TENGO {}---------------------".format(self.number_of_current_producers))
                 if self.number_of_current_producers == 0:
-                    ch.basic_ack(delivery_tag=method.delivery_tag)
                     self._stop_consuming()
                     #print("")
                     #print("--------------RabbitMQQueue, MANDO STOP_CONSUMING--------------")
                 return
-            callback(ch,method,properties,body)
-            ch.basic_ack(delivery_tag=method.delivery_tag)
 
-        self.tag = self.channel.basic_consume(queue=self.queue,on_message_callback=_callback_wrapper)
+            callback(ch,method,properties,body)
+
+        self.tag = self.channel.basic_consume(queue=self.queue, auto_ack=True, on_message_callback=_callback_wrapper)
         self.channel.start_consuming()
 
     def send_eom(self):
