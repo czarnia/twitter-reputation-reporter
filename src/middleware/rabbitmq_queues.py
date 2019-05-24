@@ -1,10 +1,10 @@
 from .rabbitmq_queue import RabbitMQQueue
 
 class RabbitMQQueues(object):
-        def __init__(self, queue_name, rabbit_host, number_of_queues):
+        def __init__(self, queue_name, rabbit_host, number_of_queues, number_of_producers = None):
             self.connection_host = rabbit_host
             self.queue = queue_name
-            self.queues = [ RabbitMQQueue("{}{}".format(queue_name, i), 'rabbitmq') for i in range(number_of_queues) ]
+            self.queues = [ RabbitMQQueue("{}{}".format(queue_name, i), 'rabbitmq', number_of_producers) for i in range(number_of_queues) ]
 
         def _hash(self, value):
             return hash(value) % len(self.queues)

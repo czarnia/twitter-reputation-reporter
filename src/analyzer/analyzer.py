@@ -20,12 +20,12 @@ SEND_DATE_QUEUE_NAME = "date_twits"
 
 
 class TwitterTextSentimentAnalyzer(multiprocessing.Process):
-    def __init__(self, id, rabbitmq_host, num_filter_workers, num_usr_workers, num_date_workers):
+    def __init__(self, receive_queue, send_usr_queues, send_date_queues):
         multiprocessing.Process.__init__(self)
         self.num_filter_workers = num_filter_workers
-        self.receive_queue = RabbitMQQueue("{}{}".format(RECEIVE_QUEUE_NAME, id), rabbitmq_host)
-        self.send_usr_queues = RabbitMQQueues(SEND_USR_QUEUE_NAME, rabbitmq_host, num_usr_workers)
-        self.send_date_queues = RabbitMQQueues(SEND_DATE_QUEUE_NAME, rabbitmq_host, num_date_workers)
+        self.receive_queue = receive_queue
+        self.send_usr_queues = send_usr_queues
+        self.send_date_queues = send_date_queues
 
     def _is_score_neutral(self, score):
         return (score < BASE_POSITIVE_SCORE and score > BASE_NEGATIVE_SCORE)
@@ -47,6 +47,23 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
         self.send_date_queues.send("{},{}".format(body_values[CREATED_AT], score), body_values[AUTHOR_ID])
 
     def run(self):
-        self.receive_queue.consume(self._callback, self.num_filter_workers)
+        print("------------------Entre al analyzer--------------------")
+        self.receive_queue.consume(self._callback)
         self.send_usr_queues.send_eom()
         self.send_date_queues.send_eom()
+        print("------------------Sali del analyzer--------------------")
+
+if __name__ == '__main__':
+    id = int(os.environ['ID'])
+
+    filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
+    user_reduce_workers = int(os.environ['USER_REDUCER_WORKERS'])
+    date_reduce_workers = int(os.environ['DATE_REDUCER_WORKERS'])
+
+    receive_queue = RabbitMQQueue("{}{}".format(RECEIVE_QUEUE_NAME, id), rabbitmq_host, filter_parser_workers)
+    send_usr_queues = RabbitMQQueues(SEND_USR_QUEUE_NAME, rabbitmq_host, user_reduce_workers)
+    send_date_queues = RabbitMQQueues(SEND_DATE_QUEUE_NAME, rabbitmq_host, date_reduce_workers)
+    sentiment_analyzer = TwitterTextSentimentAnalyzer(receive_queue, send_usr_queues, send_date_queues)
+
+    sentiment_analyzer.run()
+    sentiment_analyzer.join()

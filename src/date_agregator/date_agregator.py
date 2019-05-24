@@ -12,10 +12,9 @@ RECEIVE_QUEUE_NAME = "date_processed_twits"
 DATE_REPORT_FILE = "/twitter_reporter/reports/dates_report.csv"
 
 class DateAgregator(multiprocessing.Process):
-    def __init__(self, rabbitmq_host, number_of_producers):
+    def __init__(self, rabbitmq_queue):
         multiprocessing.Process.__init__(self)
-        self.rabbitmq_queue = RabbitMQQueue(RECEIVE_QUEUE_NAME, rabbitmq_host)
-        self.number_of_producers = number_of_producers
+        self.rabbitmq_queue = rabbitmq_queue
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
@@ -28,7 +27,8 @@ class DateAgregator(multiprocessing.Process):
         self.dates[body_values[DATE]][POSITIVE] += int(body_values[POSITIVES])
 
     def run(self):
-        self.rabbitmq_queue.consume(self._callback, self.number_of_producers)
+        print("------------------Entre al date agregator--------------------")
+        self.rabbitmq_queue.consume(self._callback)
 
         dates = list(self.dates.keys())
         dates.sort()
@@ -37,3 +37,13 @@ class DateAgregator(multiprocessing.Process):
             report.write("DATE, POSITIVES, NEGATIVES\n")
             for date in dates:
                 report.write("{},{},{}\n".format(date, self.dates[date][POSITIVE], self.dates[date][NEGATIVE]))
+        print("------------------Sali del date agregator--------------------")
+
+
+if __name__ == '__main__':
+    user_reduce_workers = int(os.environ['USER_REDUCER_WORKERS'])
+    rabbitmq_queue = RabbitMQQueue(RECEIVE_QUEUE_NAME, rabbitmq_host, user_reduce_workers)
+
+    date_agregator = DateAgregator(rabbitmq_queue)
+    date_agregator.run()
+    date_agregator.join()
