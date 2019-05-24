@@ -1,4 +1,3 @@
-import multiprocessing
 from middleware.rabbitmq_queue import RabbitMQQueue
 
 DATE = 0
@@ -11,9 +10,8 @@ NEGATIVE = "negative"
 RECEIVE_QUEUE_NAME = "date_processed_twits"
 DATE_REPORT_FILE = "/twitter_reporter/reports/dates_report.csv"
 
-class DateAgregator(multiprocessing.Process):
+class DateAgregator(object):
     def __init__(self, rabbitmq_queue):
-        multiprocessing.Process.__init__(self)
         self.rabbitmq_queue = rabbitmq_queue
         self.dates = {}
 
@@ -26,7 +24,7 @@ class DateAgregator(multiprocessing.Process):
         self.dates[body_values[DATE]][NEGATIVE] += int(body_values[NEGATIVES])
         self.dates[body_values[DATE]][POSITIVE] += int(body_values[POSITIVES])
 
-    def run(self):
+    def start(self):
         print("------------------Entre al date agregator--------------------")
         self.rabbitmq_queue.consume(self._callback)
 
@@ -45,5 +43,4 @@ if __name__ == '__main__':
     rabbitmq_queue = RabbitMQQueue(RECEIVE_QUEUE_NAME, rabbitmq_host, user_reduce_workers)
 
     date_agregator = DateAgregator(rabbitmq_queue)
-    date_agregator.run()
-    date_agregator.join()
+    date_agregator.start()

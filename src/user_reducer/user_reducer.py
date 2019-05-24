@@ -44,11 +44,17 @@ class UserReducer(multiprocessing.Process):
         print("------------------Sali del user reducer--------------------")
 
 if __name__ == '__main__':
-    id = os.environ['ID']
+    user_reducer_workers = int(os.environ['USER_REDUCER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
 
-    rabbitmq_queue =  RabbitMQQueue("{}{}".format(USR_RECEIVE_QUEUE_NAME, id), rabbitmq_host, analyzer_workers)
+    workers = []
 
-    user_reducer = UserReducer(rabbitmq_queue)
-    user_reducer.run()
-    user_reducer.join()
+    for i in range(user_reducer_workers):
+        rabbitmq_queue =  RabbitMQQueue("{}{}".format(USR_RECEIVE_QUEUE_NAME, i), rabbitmq_host, analyzer_workers)
+        workers.append(UserReducer(rabbitmq_queue))
+
+    for i in range(user_reducer_workers):
+        workers[i].run()
+
+    for i in range(user_reducer_workers):
+        workers[i].join()

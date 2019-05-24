@@ -54,16 +54,22 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
         print("------------------Sali del analyzer--------------------")
 
 if __name__ == '__main__':
-    id = int(os.environ['ID'])
-
+    analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
     filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
     user_reduce_workers = int(os.environ['USER_REDUCER_WORKERS'])
     date_reduce_workers = int(os.environ['DATE_REDUCER_WORKERS'])
 
-    receive_queue = RabbitMQQueue("{}{}".format(RECEIVE_QUEUE_NAME, id), rabbitmq_host, filter_parser_workers)
     send_usr_queues = RabbitMQQueues(SEND_USR_QUEUE_NAME, rabbitmq_host, user_reduce_workers)
     send_date_queues = RabbitMQQueues(SEND_DATE_QUEUE_NAME, rabbitmq_host, date_reduce_workers)
-    sentiment_analyzer = TwitterTextSentimentAnalyzer(receive_queue, send_usr_queues, send_date_queues)
 
-    sentiment_analyzer.run()
-    sentiment_analyzer.join()
+    workers = []
+
+    for i in range(analyzer_workers):
+        receive_queue = RabbitMQQueue("{}{}".format(RECEIVE_QUEUE_NAME, i), rabbitmq_host, filter_parser_workers)
+        workers.append(TwitterTextSentimentAnalyzer(receive_queue, send_usr_queues, send_date_queues))
+
+    for i in range(analyzer_workers):
+        workers[i].run()
+
+    for i in range(analyzer_workers):
+        workers[i].join()

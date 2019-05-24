@@ -38,12 +38,19 @@ class FilterParser(multiprocessing.Process):
         self.send_queues.send("{},{},{}".format(body_values[AUTHOR_ID], day, body_values[TEXT]), body_values[AUTHOR_ID])
 
 if __name__ == '__main__':
-    id = os.environ['ID']
+    filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
 
     send_queues = RabbitMQQueues(RECEIVE_QUEUE_NAME, rabbitmq_host, analyzer_workers)
-    receive_queue = RabbitMQQueue("{}{}".format(SEND_QUEUE_NAME, id), rabbitmq_host)
 
-    filter_parser = FilterParser(send_queues, receive_queue)
-    filter_parser.run()
-    filter_parser.join()
+    workers = []
+
+    for i in range(filter_parser_workers):
+        receive_queue = RabbitMQQueue("{}{}".format(SEND_QUEUE_NAME, i), rabbitmq_host)
+         workers.append(FilterParser(send_queues, receive_queue))
+
+    for i in range(filter_parser_workers):
+        workers[i].run()
+
+    for i in range(filter_parser_workers):
+        workers[i].join()
