@@ -3,10 +3,10 @@ services:
   rabbitmq:
     image: rabbitmq:3.7.14-management
     ports:
-        - 15672:15672
+      - 15672:15672
 
-  twitter-reporter:
-    image: twitter-reporter
+  reporter-init:
+    image: reporter-init
     env_file:
       - config.env
     volumes:
@@ -14,5 +14,53 @@ services:
     links:
       - rabbitmq
     depends_on:
-        - rabbitmq
-    restart: on-failure
+      - rabbitmq
+
+  reporter-filter-parser:
+    image: reporter-filter-parser
+    env_file:
+      - config.env
+    links:
+      - rabbitmq
+    depends_on:
+      - rabbitmq
+
+  reporter-analyzer:
+    image: reporter-analyzer
+    env_file:
+      - config.env
+    links:
+      - rabbitmq
+    depends_on:
+      - rabbitmq
+
+  reporter-user-reducer:
+    image: reporter-user-reducer
+    env_file:
+      - config.env
+    volumes:
+      - ./reports:/twitter_reporter/reports
+    links:
+      - rabbitmq
+    depends_on:
+      - rabbitmq
+
+  reporter-date-reducer:
+    image: reporter-date-reducer
+    env_file:
+      - config.env
+    links:
+      - rabbitmq
+    depends_on:
+      - rabbitmq
+
+  reporter-date-agreggator:
+    image: reporter-date-aggregator
+    env_file:
+      - config.env
+    volumes:
+      - ./reports:/twitter_reporter/reports
+    links:
+      - rabbitmq
+    depends_on:
+      - rabbitmq
