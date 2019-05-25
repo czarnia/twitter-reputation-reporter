@@ -1,4 +1,7 @@
 import multiprocessing
+import os
+import sys
+sys.path.append('../')
 
 from middleware.rabbitmq_queue import RabbitMQQueue
 
@@ -41,6 +44,7 @@ class DateReducer(multiprocessing.Process):
         print("------------------Sali del date reducer--------------------")
 
 if __name__ == '__main__':
+    rabbitmq_host = os.environ['RABBITMQ_HOST']
     date_reducer_workers = int(os.environ['DATE_REDUCER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
 

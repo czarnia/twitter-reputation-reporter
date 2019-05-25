@@ -4,4 +4,4 @@ RUN pip3 install pika
 
 COPY ./src /twitter_reporter/src
 WORKDIR /twitter_reporter/src/init
-ENTRYPOINT python3 -u init.py
+ENTRYPOINT python3 -u main.py

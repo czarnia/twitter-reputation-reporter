@@ -1,5 +1,8 @@
 import multiprocessing
+import os
 import fcntl
+import sys
+sys.path.append('../')
 
 from middleware.rabbitmq_queue import RabbitMQQueue
 
@@ -40,10 +43,11 @@ class UserReducer(multiprocessing.Process):
 
     def run(self):
         print("------------------Entre al user reducer--------------------")
-        self.rabbitmq_queue.consume(self._callback, self.num_analyzer_workers)
+        self.rabbitmq_queue.consume(self._callback)
         print("------------------Sali del user reducer--------------------")
 
 if __name__ == '__main__':
+    rabbitmq_host = os.environ['RABBITMQ_HOST']
     user_reducer_workers = int(os.environ['USER_REDUCER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
 

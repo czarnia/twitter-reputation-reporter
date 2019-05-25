@@ -1,4 +1,8 @@
 import multiprocessing
+import os
+import sys
+sys.path.append('../')
+
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 from middleware.rabbitmq_queue import RabbitMQQueue
@@ -22,7 +26,6 @@ SEND_DATE_QUEUE_NAME = "date_twits"
 class TwitterTextSentimentAnalyzer(multiprocessing.Process):
     def __init__(self, receive_queue, send_usr_queues, send_date_queues):
         multiprocessing.Process.__init__(self)
-        self.num_filter_workers = num_filter_workers
         self.receive_queue = receive_queue
         self.send_usr_queues = send_usr_queues
         self.send_date_queues = send_date_queues
@@ -54,6 +57,7 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
         print("------------------Sali del analyzer--------------------")
 
 if __name__ == '__main__':
+    rabbitmq_host = os.environ['RABBITMQ_HOST']
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
     filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
     user_reduce_workers = int(os.environ['USER_REDUCER_WORKERS'])

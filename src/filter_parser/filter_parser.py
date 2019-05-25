@@ -1,4 +1,8 @@
 import multiprocessing
+import os
+import sys
+sys.path.append('../')
+
 from dateutil.parser import parse
 
 from middleware.rabbitmq_queue import RabbitMQQueue
@@ -38,6 +42,7 @@ class FilterParser(multiprocessing.Process):
         self.send_queues.send("{},{},{}".format(body_values[AUTHOR_ID], day, body_values[TEXT]), body_values[AUTHOR_ID])
 
 if __name__ == '__main__':
+    rabbitmq_host = os.environ['RABBITMQ_HOST']
     filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
 
@@ -47,7 +52,7 @@ if __name__ == '__main__':
 
     for i in range(filter_parser_workers):
         receive_queue = RabbitMQQueue("{}{}".format(SEND_QUEUE_NAME, i), rabbitmq_host)
-         workers.append(FilterParser(send_queues, receive_queue))
+        workers.append(FilterParser(send_queues, receive_queue))
 
     for i in range(filter_parser_workers):
         workers[i].run()

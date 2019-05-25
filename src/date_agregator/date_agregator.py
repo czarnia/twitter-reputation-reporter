@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.append('../')
+
 from middleware.rabbitmq_queue import RabbitMQQueue
 
 DATE = 0
@@ -39,6 +43,7 @@ class DateAgregator(object):
 
 
 if __name__ == '__main__':
+    rabbitmq_host = os.environ['RABBITMQ_HOST']
     user_reduce_workers = int(os.environ['USER_REDUCER_WORKERS'])
     rabbitmq_queue = RabbitMQQueue(RECEIVE_QUEUE_NAME, rabbitmq_host, user_reduce_workers)
 
