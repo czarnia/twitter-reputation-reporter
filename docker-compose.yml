@@ -54,7 +54,7 @@ services:
     depends_on:
       - rabbitmq
 
-  reporter-date-agreggator:
+  reporter-date-aggregator:
     image: reporter-date-aggregator
     env_file:
       - config.env
