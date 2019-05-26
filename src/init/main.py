@@ -1,9 +1,12 @@
+import logging
+
 import os
 import random
 import sys
 sys.path.append('../')
 
 from middleware.rabbitmq_queues import RabbitMQQueues
+from middleware.log import config_log
 
 SEND_QUEUE_NAME = "raw_twits"
 RABBITMQ_HOST = 'rabbitmq'
@@ -14,24 +17,27 @@ class TwitterReputationReporter(object):
         self.queues = rabbitmq_queues
 
     def start(self):
-        print("------------------Entre al main--------------------")
-
         with open(self.file_path, "r") as twits:
             next(twits) #avoid header
             for line in twits:
+                logging.info("Sending line {}".format(line))
                 self.queues.send(line, random.random())
 
+        logging.info("Sending EOM")
         self.queues.send_eom()
-
-        print("------------------Sali del main--------------------")
 
 
 if __name__ == '__main__':
+    config_log("INIT")
+
     file_path = os.environ['TWITS_FILE']
     rabbitmq_host = os.environ['RABBITMQ_HOST']
     filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
 
     rabbitmq_queues = RabbitMQQueues(SEND_QUEUE_NAME, rabbitmq_host, filter_parser_workers)
+    logging.info("Queues created")
 
     reporter = TwitterReputationReporter(file_path, rabbitmq_queues)
+    logging.info("Init starts")
     reporter.start()
+    logging.info("Init ends")

@@ -1,3 +1,5 @@
+import logging
+
 import multiprocessing
 import os
 import sys
@@ -7,6 +9,7 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 from middleware.rabbitmq_queue import RabbitMQQueue
 from middleware.rabbitmq_queues import RabbitMQQueues
+from middleware.log import config_log
 
 AUTHOR_ID = 0
 CREATED_AT = 1
@@ -37,26 +40,34 @@ class TwitterTextSentimentAnalyzer(multiprocessing.Process):
         return POSITIVE_SCORE if score >= BASE_POSITIVE_SCORE else NEGATIVE_SCORE
 
     def _callback(self, ch, method, properties, body):
+        logging.info("Received {}".format(body.decode('UTF-8')))
         sentiment_analyzer = SentimentIntensityAnalyzer()
         body_values = body.decode('UTF-8').split(",")
         score = sentiment_analyzer.polarity_scores(body_values[TEXT])['compound']
+        logging.info("Score is {}".format(score))
 
         if self._is_score_neutral(score):
+            logging.info("The score is neutral")
             return
 
         score = self._map_score(score)
 
+        logging.info("Sending: author_id = {}, date = {}, score = {}".format(body_values[AUTHOR_ID], body_values[CREATED_AT], score))
         self.send_usr_queues.send("{},{}".format(body_values[AUTHOR_ID], score), body_values[AUTHOR_ID])
         self.send_date_queues.send("{},{}".format(body_values[CREATED_AT], score), body_values[AUTHOR_ID])
 
     def run(self):
-        print("------------------Entre al analyzer--------------------")
+        logging.info("Start consuming")
         self.receive_queue.consume(self._callback)
+        logging.info("Sending EOM to usr queues")
         self.send_usr_queues.send_eom()
+        logging.info("Sending EOM to date queus")
         self.send_date_queues.send_eom()
-        print("------------------Sali del analyzer--------------------")
+        logging.info("Finish")
 
 if __name__ == '__main__':
+    config_log("ANALYZER")
+
     rabbitmq_host = os.environ['RABBITMQ_HOST']
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
     filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
@@ -65,6 +76,7 @@ if __name__ == '__main__':
 
     send_usr_queues = RabbitMQQueues(SEND_USR_QUEUE_NAME, rabbitmq_host, user_reduce_workers)
     send_date_queues = RabbitMQQueues(SEND_DATE_QUEUE_NAME, rabbitmq_host, date_reduce_workers)
+    logging.info("Queues created")
 
     workers = []
 
@@ -72,8 +84,15 @@ if __name__ == '__main__':
         receive_queue = RabbitMQQueue("{}{}".format(RECEIVE_QUEUE_NAME, i), rabbitmq_host, filter_parser_workers)
         workers.append(TwitterTextSentimentAnalyzer(receive_queue, send_usr_queues, send_date_queues))
 
+    logging.info("Workers created")
+
     for i in range(analyzer_workers):
         workers[i].run()
 
+    logging.info("Starting running workers")
+    logging.info("Waiting for workers to stop")
+
     for i in range(analyzer_workers):
         workers[i].join()
+
+    logging.info("All workers finished, exiting")
