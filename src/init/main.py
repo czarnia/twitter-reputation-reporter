@@ -1,6 +1,7 @@
 import logging
 
 import os
+import time
 import random
 import sys
 sys.path.append('../')
@@ -22,6 +23,8 @@ class TwitterReputationReporter(object):
             for line in twits:
                 logging.info("Sending line {}".format(line))
                 self.queues.send(line, line)
+                time.sleep(0.01)
+
 
         logging.info("Sending EOM")
         self.queues.send_eom()
