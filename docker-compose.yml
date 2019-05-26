@@ -20,6 +20,8 @@ services:
     image: reporter-filter-parser
     env_file:
       - config.env
+    volumes:
+      - ./reports:/twitter_reporter/reports
     links:
       - rabbitmq
     depends_on:
@@ -29,6 +31,8 @@ services:
     image: reporter-analyzer
     env_file:
       - config.env
+    volumes:
+      - ./reports:/twitter_reporter/reports
     links:
       - rabbitmq
     depends_on:
@@ -40,6 +44,8 @@ services:
       - config.env
     volumes:
       - ./reports:/twitter_reporter/reports
+    volumes:
+      - ./reports:/twitter_reporter/reports
     links:
       - rabbitmq
     depends_on:
@@ -49,6 +55,8 @@ services:
     image: reporter-date-reducer
     env_file:
       - config.env
+    volumes:
+      - ./reports:/twitter_reporter/reports
     links:
       - rabbitmq
     depends_on:
