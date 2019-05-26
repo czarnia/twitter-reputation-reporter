@@ -55,12 +55,10 @@ if __name__ == '__main__':
     filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
 
-    send_queues = RabbitMQQueues(RECEIVE_QUEUE_NAME, rabbitmq_host, analyzer_workers)
-    logging.info("Queues created")
-
     workers = []
 
     for i in range(filter_parser_workers):
+        send_queues = RabbitMQQueues(RECEIVE_QUEUE_NAME, rabbitmq_host, analyzer_workers)
         receive_queue = RabbitMQQueue("{}{}".format(SEND_QUEUE_NAME, i), rabbitmq_host)
         workers.append(FilterParser(send_queues, receive_queue))
 

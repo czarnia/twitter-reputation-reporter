@@ -58,12 +58,10 @@ if __name__ == '__main__':
     date_reducer_workers = int(os.environ['DATE_REDUCER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
 
-    send_rabbitmq_queue = RabbitMQQueue(DATE_SEND_QUEUE_NAME, rabbitmq_host)
-    logging.info("Queue created")
-
     workers = []
 
     for i in range(date_reducer_workers):
+        send_rabbitmq_queue = RabbitMQQueue(DATE_SEND_QUEUE_NAME, rabbitmq_host)
         receive_rabbitmq_queue = RabbitMQQueue("{}{}".format(DATE_RECEIVE_QUEUE_NAME, i), rabbitmq_host, analyzer_workers)
         workers.append(DateReducer(receive_rabbitmq_queue, send_rabbitmq_queue))
 

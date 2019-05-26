@@ -1,0 +1,12 @@
+tweet_id,author_id,inbound,created_at,text,response_tweet_id,in_response_to_tweet_id
+1,1,True,Wed Oct 11 06:55:44 +0000 2017,BAD BAD BAD, 1, 2
+1,1,True,Wed Oct 11 06:55:44 +0000 2017,BAD BAD BAD, 1, 2
+1,1,True,Wed Oct 11 06:55:44 +0000 2017,BAD BAD BAD, 1, 2
+1,1,True,Wed Oct 11 06:55:44 +0000 2017,GOD GOD GOD, 1, 2
+1,1,True,Wed Oct 11 06:55:44 +0000 2017,GOD GOD GOD, 1, 2
+1,1,True,Wed Oct 11 06:55:44 +0000 2017,GOD GOD GOD, 1, 2
+1,2,True,Wed Oct 11 06:55:44 +0000 2017,GOD GOD GOD, 1, 2
+1,2,True,Wed Oct 11 06:55:44 +0000 2017,GOD GOD GOD, 1, 2
+1,2,True,Wed Oct 11 06:55:44 +0000 2017,GOD GOD GOD, 1, 2
+1,2,True,Wed Oct 11 06:55:44 +0000 2017,BAD BAD BAD, 1, 2
+1,2,True,Wed Oct 11 06:55:44 +0000 2017,BAD BAD BAD, 1, 2

@@ -74,13 +74,11 @@ if __name__ == '__main__':
     user_reduce_workers = int(os.environ['USER_REDUCER_WORKERS'])
     date_reduce_workers = int(os.environ['DATE_REDUCER_WORKERS'])
 
-    send_usr_queues = RabbitMQQueues(SEND_USR_QUEUE_NAME, rabbitmq_host, user_reduce_workers)
-    send_date_queues = RabbitMQQueues(SEND_DATE_QUEUE_NAME, rabbitmq_host, date_reduce_workers)
-    logging.info("Queues created")
-
     workers = []
 
     for i in range(analyzer_workers):
+        send_usr_queues = RabbitMQQueues(SEND_USR_QUEUE_NAME, rabbitmq_host, user_reduce_workers)
+        send_date_queues = RabbitMQQueues(SEND_DATE_QUEUE_NAME, rabbitmq_host, date_reduce_workers)
         receive_queue = RabbitMQQueue("{}{}".format(RECEIVE_QUEUE_NAME, i), rabbitmq_host, filter_parser_workers)
         workers.append(TwitterTextSentimentAnalyzer(receive_queue, send_usr_queues, send_date_queues))
 
