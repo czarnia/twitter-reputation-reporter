@@ -87,7 +87,7 @@ if __name__ == '__main__':
     logging.info("Workers created")
 
     for i in range(analyzer_workers):
-        workers[i].run()
+        workers[i].start()
 
     logging.info("Starting running workers")
     logging.info("Waiting for workers to stop")

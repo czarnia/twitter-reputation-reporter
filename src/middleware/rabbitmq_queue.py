@@ -10,6 +10,7 @@ class RabbitMQQueue(object):
                                        blocked_connection_timeout=300))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=self.queue, durable=True)
+        self.number_of_producers = number_of_producers
         self.tag = None
 
     def __exit__(self, *args):
