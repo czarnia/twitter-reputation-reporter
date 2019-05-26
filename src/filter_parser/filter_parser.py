@@ -46,7 +46,7 @@ class FilterParser(multiprocessing.Process):
 
         day = str(parse(body_values[CREATED_AT]).date())
         logging.info("Sending parsed value")
-        self.send_queues.send("{},{},{}".format(body_values[AUTHOR_ID], day, body_values[TEXT]), body_values[AUTHOR_ID])
+        self.send_queues.send("{},{},{}".format(body_values[AUTHOR_ID], day, body_values[TEXT]), body_values.decode('UTF-8'))
 
 if __name__ == '__main__':
     config_log("FILTER PARSER")
