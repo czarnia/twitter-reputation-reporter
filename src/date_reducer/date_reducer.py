@@ -11,7 +11,7 @@ from middleware.log import config_log
 DATE = 0
 SCORE = 1
 
-FLUSH_VALUE = 3
+FLUSH_VALUE = 10
 
 NEGATIVE_SCORE = -1
 
@@ -26,9 +26,11 @@ class DateReducer(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
         self.receive_rabbitmq_queue = receive_rabbitmq_queue
         self.send_rabbitmq_queue = send_rabbitmq_queue
+        self.received = 0
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
+        self.received += 1
         logging.info("Received {}".format(body.decode('UTF-8')))
         body_values = body.decode('UTF-8').split(",")
 
@@ -42,7 +44,7 @@ class DateReducer(multiprocessing.Process):
 
         logging.info("Dates info {}".format(self.dates))
 
-        if len(self.dates.keys()) != FLUSH_VALUE:
+        if self.received != FLUSH_VALUE:
             return
 
         for date in self.dates:
@@ -50,6 +52,7 @@ class DateReducer(multiprocessing.Process):
             self.send_rabbitmq_queue.send("{},{},{}".format(date, self.dates[date][POSITIVE], self.dates[date][NEGATIVE]))
 
         self.dates = {}
+        self.received = 0
 
 
 
