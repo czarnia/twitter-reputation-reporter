@@ -23,7 +23,7 @@ class TwitterReputationReporter(object):
             for line in twits:
                 logging.info("Sending line {}".format(line))
                 self.queues.send(line, line)
-                time.sleep(0.0001)
+                time.sleep(0.001)
 
 
         logging.info("Sending EOM")
