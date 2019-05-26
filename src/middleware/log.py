@@ -2,6 +2,7 @@ import logging
 import os
 
 def config_log(proccess_name):
+    logging.basicConfig(level=logging.INFO)
     logFormatter = logging.Formatter(proccess_name+" %(asctime)s - [%(process)d] - %(message)s")
     rootLogger = logging.getLogger()
 

@@ -33,7 +33,7 @@ class DateReducer(multiprocessing.Process):
         if not body_values[DATE] in self.dates:
             self.dates[body_values[DATE]] = { POSITIVE : 0, NEGATIVE : 0 }
 
-        if body_values[SCORE] == NEGATIVE_SCORE:
+        if int(body_values[SCORE]) == NEGATIVE_SCORE:
             self.dates[body_values[DATE]][NEGATIVE] += 1
         else:
             self.dates[body_values[DATE]][POSITIVE] += 1
