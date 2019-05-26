@@ -21,7 +21,7 @@ class TwitterReputationReporter(object):
             next(twits) #avoid header
             for line in twits:
                 logging.info("Sending line {}".format(line))
-                self.queues.send(line, random.random())
+                self.queues.send(line, line)
 
         logging.info("Sending EOM")
         self.queues.send_eom()
