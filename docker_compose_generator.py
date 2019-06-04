@@ -2,20 +2,20 @@ import argparse
 
 def generate_env_file(args):
     with open("config.env", "w") as config_file:
-        config_file.write("RABBITMQ_HOST=rabbitmq")
-        config_file.write("FILTER_PARSER_WORKERS={}".format(args.filter_parser_workers))
-        config_file.write("ANALYZER_WORKERS={}".format(args.analyzer_workers))
-        config_file.write("USER_REDUCER_WORKERS={}".format(args.user_reducer_workers))
-        config_file.write("DATE_REDUCER_WORKERS={}".format(args.user_reducer_workers))
+        config_file.write("RABBITMQ_HOST=rabbitmq\n")
+        config_file.write("FILTER_PARSER_WORKERS={}\n".format(args.filter_parser_workers))
+        config_file.write("ANALYZER_WORKERS={}\n".format(args.analyzer_workers))
+        config_file.write("USER_REDUCER_WORKERS={}\n".format(args.user_reducer_workers))
+        config_file.write("DATE_REDUCER_WORKERS={}\n".format(args.user_reducer_workers))
 
-        config_file.write("TWITS_FILE=/twitter_reporter/reports/={}".format(args.twits_file))
-        config_file.write("LOGS_FILE=/twitter_reporter/reports/={}".format(args.logs_file))
+        config_file.write("TWITS_FILE=/twitter_reporter/reports/{}\n".format(args.twits_file))
+        config_file.write("LOGS_FILE=/twitter_reporter/reports/{}".format(args.logs_file))
 
 def write_header(file):
     file.write("version: '2'\nservices:\n")
 
 def write_rabbit_service(file):
-    file.write("  rabbitmq:\n    image: rabbitmq:3.7.14-management\n    ports:\n      - 15672:15672\n\n")
+    file.write("  rabbitmq:\n    image: rabbitmq:3.7.14-management\n    ports:\n      - 15672:15672\n    healthcheck:\n        test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:15672\"]\n        interval: 30s\n        timeout: 10s\n        retries: 5\n\n")
 
 def write_init_service(file):
     file.write("  reporter-init:\n    image: reporter-init\n    env_file:\n      - config.env\n    volumes:\n      - ./reports:/twitter_reporter/reports\n    links:\n      - rabbitmq\n    depends_on:\n      - rabbitmq\n\n")
