@@ -1,6 +1,5 @@
 import logging
 
-import multiprocessing
 import os
 import sys
 sys.path.append('../')
@@ -26,7 +25,7 @@ SEND_USR_QUEUE_NAME = "usr_twits"
 SEND_DATE_QUEUE_NAME = "date_twits"
 
 
-class TwitterTextSentimentAnalyzer(multiprocessing.Process):
+class TwitterTextSentimentAnalyzer(object):
     def __init__(self, receive_queue, send_usr_queues, send_date_queues):
         multiprocessing.Process.__init__(self)
         self.receive_queue = receive_queue
@@ -74,23 +73,15 @@ if __name__ == '__main__':
     user_reduce_workers = int(os.environ['USER_REDUCER_WORKERS'])
     date_reduce_workers = int(os.environ['DATE_REDUCER_WORKERS'])
 
-    workers = []
+    worker_id = int(os.environ['SERVICE_ID'])
 
-    for i in range(analyzer_workers):
-        send_usr_queues = RabbitMQQueues(SEND_USR_QUEUE_NAME, rabbitmq_host, user_reduce_workers)
-        send_date_queues = RabbitMQQueues(SEND_DATE_QUEUE_NAME, rabbitmq_host, date_reduce_workers)
-        receive_queue = RabbitMQQueue("{}{}".format(RECEIVE_QUEUE_NAME, i), rabbitmq_host, filter_parser_workers)
-        workers.append(TwitterTextSentimentAnalyzer(receive_queue, send_usr_queues, send_date_queues))
+    send_usr_queues = RabbitMQQueues(SEND_USR_QUEUE_NAME, rabbitmq_host, user_reduce_workers)
+    send_date_queues = RabbitMQQueues(SEND_DATE_QUEUE_NAME, rabbitmq_host, date_reduce_workers)
+    receive_queue = RabbitMQQueue("{}{}".format(RECEIVE_QUEUE_NAME, worker_id), rabbitmq_host, filter_parser_workers)
+    worker = TwitterTextSentimentAnalyzer(receive_queue, send_usr_queues, send_date_queues)
 
-    logging.info("Workers created")
+    logging.info("Worker created, started running")
 
-    for i in range(analyzer_workers):
-        workers[i].start()
+    worker.run()
 
-    logging.info("Starting running workers")
-    logging.info("Waiting for workers to stop")
-
-    for i in range(analyzer_workers):
-        workers[i].join()
-
-    logging.info("All workers finished, exiting")
+    logging.info("Worker finished, exiting")

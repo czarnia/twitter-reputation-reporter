@@ -1,6 +1,5 @@
 import logging
 
-import multiprocessing
 import os
 import sys
 sys.path.append('../')
@@ -23,7 +22,7 @@ IS_CUSTOMER = "True"
 RECEIVE_QUEUE_NAME = "preprocesed_twits"
 SEND_QUEUE_NAME = "raw_twits"
 
-class FilterParser(multiprocessing.Process):
+class FilterParser(object):
     def __init__(self, send_queues, receive_queue):
         multiprocessing.Process.__init__(self)
         self.send_queues = send_queues
@@ -55,21 +54,12 @@ if __name__ == '__main__':
     filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
 
-    workers = []
+    worker_id = int(os.environ['SERVICE_ID'])
 
-    for i in range(filter_parser_workers):
-        send_queues = RabbitMQQueues(RECEIVE_QUEUE_NAME, rabbitmq_host, analyzer_workers)
-        receive_queue = RabbitMQQueue("{}{}".format(SEND_QUEUE_NAME, i), rabbitmq_host)
-        workers.append(FilterParser(send_queues, receive_queue))
+    send_queues = RabbitMQQueues(RECEIVE_QUEUE_NAME, rabbitmq_host, analyzer_workers)
+    receive_queue = RabbitMQQueue("{}{}".format(SEND_QUEUE_NAME, worker_id), rabbitmq_host)
+    worker = FilterParser(send_queues, receive_queue)
 
-    logging.info("Workers created")
-
-    for i in range(filter_parser_workers):
-        workers[i].start()
-
-    logging.info("Starting running workers")
-    logging.info("Waiting for workers to stop")
-    for i in range(filter_parser_workers):
-        workers[i].join()
-
-    logging.info("All workers finished, exiting")
+    logging.info("Worker created, started running")
+    worker.run()
+    logging.info("Worker finished, exiting")

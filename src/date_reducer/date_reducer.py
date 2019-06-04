@@ -1,6 +1,5 @@
 import logging
 
-import multiprocessing
 import os
 import sys
 sys.path.append('../')
@@ -21,7 +20,7 @@ NEGATIVE = "negative"
 DATE_RECEIVE_QUEUE_NAME = "date_twits"
 DATE_SEND_QUEUE_NAME = "date_processed_twits"
 
-class DateReducer(multiprocessing.Process):
+class DateReducer(object):
     def __init__(self, receive_rabbitmq_queue, send_rabbitmq_queue):
         multiprocessing.Process.__init__(self)
         self.receive_rabbitmq_queue = receive_rabbitmq_queue
@@ -55,7 +54,6 @@ class DateReducer(multiprocessing.Process):
         self.received = 0
 
 
-
     def run(self):
         logging.info("Start consuming")
         self.receive_rabbitmq_queue.consume(self._callback)
@@ -69,26 +67,17 @@ class DateReducer(multiprocessing.Process):
 
 if __name__ == '__main__':
     config_log("DATE REDUCER")
+
     rabbitmq_host = os.environ['RABBITMQ_HOST']
     date_reducer_workers = int(os.environ['DATE_REDUCER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
+    
+    worker_id = int(os.environ['SERVICE_ID'])
 
-    workers = []
+    send_rabbitmq_queue = RabbitMQQueue(DATE_SEND_QUEUE_NAME, rabbitmq_host)
+    receive_rabbitmq_queue = RabbitMQQueue("{}{}".format(DATE_RECEIVE_QUEUE_NAME, worker_id), rabbitmq_host, analyzer_workers)
+    worker = DateReducer(receive_rabbitmq_queue, send_rabbitmq_queue)
 
-    for i in range(date_reducer_workers):
-        send_rabbitmq_queue = RabbitMQQueue(DATE_SEND_QUEUE_NAME, rabbitmq_host)
-        receive_rabbitmq_queue = RabbitMQQueue("{}{}".format(DATE_RECEIVE_QUEUE_NAME, i), rabbitmq_host, analyzer_workers)
-        workers.append(DateReducer(receive_rabbitmq_queue, send_rabbitmq_queue))
-
-    logging.info("Workers created")
-
-    for i in range(date_reducer_workers):
-        workers[i].start()
-
-    logging.info("Starting running workers")
-    logging.info("Waiting for workers to stop")
-
-    for i in range(date_reducer_workers):
-        workers[i].join()
-
-    logging.info("All workers finished, exiting")
+    logging.info("Worker created, started running")
+    worker.run()
+    logging.info("Worker finished, exiting")

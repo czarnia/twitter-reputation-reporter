@@ -32,7 +32,7 @@ class DateAggregator(object):
         self.dates[body_values[DATE]][POSITIVE] += int(body_values[POSITIVES])
         logging.info("Dates info: {}".format(self.dates))
 
-    def start(self):
+    def run(self):
         logging.info("Start consuming")
         self.rabbitmq_queue.consume(self._callback)
 
@@ -57,7 +57,6 @@ if __name__ == '__main__':
     logging.info("Queue created")
 
     date_aggregator = DateAggregator(rabbitmq_queue)
-    logging.info("Starting worker")
-    logging.info("Waiting for worker to stop")
-    date_aggregator.start()
+    logging.info("Worker created, started running")
+    date_aggregator.run()
     logging.info("Worker finished, exiting")

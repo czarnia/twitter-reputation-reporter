@@ -1,6 +1,5 @@
 import logging
 
-import multiprocessing
 import os
 import fcntl
 import sys
@@ -19,7 +18,7 @@ USR_REPORT_FILE = "/twitter_reporter/reports/user_report.csv"
 
 USR_RECEIVE_QUEUE_NAME = "usr_twits"
 
-class UserReducer(multiprocessing.Process):
+class UserReducer(object):
     def __init__(self, rabbitmq_queue):
         multiprocessing.Process.__init__(self)
         self.rabbitmq_queue = rabbitmq_queue
@@ -60,21 +59,11 @@ if __name__ == '__main__':
     user_reducer_workers = int(os.environ['USER_REDUCER_WORKERS'])
     analyzer_workers = int(os.environ['ANALYZER_WORKERS'])
 
-    workers = []
+    worker_id = int(os.environ['SERVICE_ID'])
 
-    for i in range(user_reducer_workers):
-        rabbitmq_queue =  RabbitMQQueue("{}{}".format(USR_RECEIVE_QUEUE_NAME, i), rabbitmq_host, analyzer_workers)
-        workers.append(UserReducer(rabbitmq_queue))
+    rabbitmq_queue =  RabbitMQQueue("{}{}".format(USR_RECEIVE_QUEUE_NAME, worker_id), rabbitmq_host, analyzer_workers)
+    worker = UserReducer(rabbitmq_queue)
 
-    logging.info("Workers created")
-
-    for i in range(user_reducer_workers):
-        workers[i].start()
-
-    logging.info("Starting running workers")
-    logging.info("Waiting for workers to stop")
-
-    for i in range(user_reducer_workers):
-        workers[i].join()
-
-    logging.info("All workers finished, exiting")
+    logging.info("Worker created, started running")
+    worker.run()
+    logging.info("Worker finished, exiting")

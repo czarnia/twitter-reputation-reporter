@@ -41,6 +41,6 @@ if __name__ == '__main__':
     logging.info("Queues created")
 
     reporter = TwitterReputationReporter(file_path, rabbitmq_queues)
-    logging.info("Init starts")
+    logging.info("Worker created, started running")
     reporter.start()
-    logging.info("Init ends")
+    logging.info("Worker finished, exiting")
