@@ -20,7 +20,6 @@ USR_RECEIVE_QUEUE_NAME = "usr_twits"
 
 class UserReducer(object):
     def __init__(self, rabbitmq_queue):
-        multiprocessing.Process.__init__(self)
         self.rabbitmq_queue = rabbitmq_queue
         self.users = {}
 

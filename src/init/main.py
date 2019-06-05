@@ -38,7 +38,7 @@ if __name__ == '__main__':
     filter_parser_workers = int(os.environ['FILTER_PARSER_WORKERS'])
 
     rabbitmq_queues = RabbitMQQueues(SEND_QUEUE_NAME, rabbitmq_host, filter_parser_workers)
-    logging.info("Queues created")
+    logging.info("Queues ({}) created".format(filter_parser_workers))
 
     reporter = TwitterReputationReporter(file_path, rabbitmq_queues)
     logging.info("Worker created, started running")

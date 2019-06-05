@@ -22,7 +22,6 @@ DATE_SEND_QUEUE_NAME = "date_processed_twits"
 
 class DateReducer(object):
     def __init__(self, receive_rabbitmq_queue, send_rabbitmq_queue):
-        multiprocessing.Process.__init__(self)
         self.receive_rabbitmq_queue = receive_rabbitmq_queue
         self.send_rabbitmq_queue = send_rabbitmq_queue
         self.received = 0

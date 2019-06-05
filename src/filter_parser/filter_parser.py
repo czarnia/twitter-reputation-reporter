@@ -24,7 +24,6 @@ SEND_QUEUE_NAME = "raw_twits"
 
 class FilterParser(object):
     def __init__(self, send_queues, receive_queue):
-        multiprocessing.Process.__init__(self)
         self.send_queues = send_queues
         self.receive_queue = receive_queue
 

@@ -27,7 +27,6 @@ SEND_DATE_QUEUE_NAME = "date_twits"
 
 class TwitterTextSentimentAnalyzer(object):
     def __init__(self, receive_queue, send_usr_queues, send_date_queues):
-        multiprocessing.Process.__init__(self)
         self.receive_queue = receive_queue
         self.send_usr_queues = send_usr_queues
         self.send_date_queues = send_date_queues
