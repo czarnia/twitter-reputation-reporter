@@ -32,13 +32,16 @@ class DateReducer(object):
         logging.info("Received {}".format(body.decode('UTF-8')))
         body_values = body.decode('UTF-8').split(",")
 
-        if not body_values[DATE] in self.dates:
-            self.dates[body_values[DATE]] = { POSITIVE : 0, NEGATIVE : 0 }
+        date = body_values[DATE]
+        score = body_values[SCORE]
 
-        if int(body_values[SCORE]) == NEGATIVE_SCORE:
-            self.dates[body_values[DATE]][NEGATIVE] += 1
+        if not date in self.dates:
+            self.dates[date] = { POSITIVE : 0, NEGATIVE : 0 }
+
+        if int(score) == NEGATIVE_SCORE:
+            self.dates[date][NEGATIVE] += 1
         else:
-            self.dates[body_values[DATE]][POSITIVE] += 1
+            self.dates[date][POSITIVE] += 1
 
         logging.info("Dates info {}".format(self.dates))
 

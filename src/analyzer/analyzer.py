@@ -30,6 +30,7 @@ class TwitterTextSentimentAnalyzer(object):
         self.receive_queue = receive_queue
         self.send_usr_queues = send_usr_queues
         self.send_date_queues = send_date_queues
+        self.sentiment_analyzer = SentimentIntensityAnalyzer()
 
     def _is_score_neutral(self, score):
         return (score < BASE_POSITIVE_SCORE and score > BASE_NEGATIVE_SCORE)
@@ -39,9 +40,9 @@ class TwitterTextSentimentAnalyzer(object):
 
     def _callback(self, ch, method, properties, body):
         logging.info("Received {}".format(body.decode('UTF-8')))
-        sentiment_analyzer = SentimentIntensityAnalyzer()
         body_values = body.decode('UTF-8').split(",")
-        score = sentiment_analyzer.polarity_scores(body_values[TEXT])['compound']
+
+        score = self.sentiment_analyzer.polarity_scores(body_values[TEXT])['compound']
         logging.info("Score is {}".format(score))
 
         if self._is_score_neutral(score):

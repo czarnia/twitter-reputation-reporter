@@ -25,11 +25,15 @@ class DateAggregator(object):
         logging.info("Received {}".format(body.decode('UTF-8')))
         body_values = body.decode('UTF-8').split(",")
 
-        if not body_values[DATE] in self.dates:
-            self.dates[body_values[DATE]] = { POSITIVE : 0, NEGATIVE : 0 }
+        date = body_values[DATE]
+        positive_scores = body_values[POSITIVES]
+        negative_scores = body_values[NEGATIVES]
 
-        self.dates[body_values[DATE]][NEGATIVE] += int(body_values[NEGATIVES])
-        self.dates[body_values[DATE]][POSITIVE] += int(body_values[POSITIVES])
+        if not date in self.dates:
+            self.dates[date] = { POSITIVE : 0, NEGATIVE : 0 }
+
+        self.dates[date][NEGATIVE] += int(negative_scores)
+        self.dates[date][POSITIVE] += int(positive_scores)
         logging.info("Dates info: {}".format(self.dates))
 
     def run(self):

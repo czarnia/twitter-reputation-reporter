@@ -13,6 +13,7 @@ docker build -t reporter-date-reducer -f src/date_reducer/Dockerfile ./src/date_
 docker build -t reporter-date-aggregator -f src/date_aggregator/Dockerfile ./src/date_aggregator
 
 docker-compose up
+docker-compose down
 
 find . -name "*.env" -type f -delete
 rm docker-compose.yml

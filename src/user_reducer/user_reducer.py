@@ -29,22 +29,23 @@ class UserReducer(object):
     def _callback(self, ch, method, properties, body):
         logging.info("Received {}".format(body.decode('UTF-8')))
         body_values = body.decode('UTF-8').split(",")
-        if int(body_values[SCORE]) != NEGATIVE_SCORE or self._was_already_alerted(body_values[AUTHOR_ID]):
+
+        author_id = body_values[AUTHOR_ID]
+        score = body_values[SCORE]
+
+        if int(score) != NEGATIVE_SCORE or self._was_already_alerted(author_id):
             logging.info("Skipping value since it does not have a negative score or was already alerted")
             return
 
-        if body_values[AUTHOR_ID] in self.users:
-            self.users[body_values[AUTHOR_ID]] += 1
-        else:
-            self.users[body_values[AUTHOR_ID]] = 1
+        self.users[author_id] = self.users.get(author_id, 0) + 1
 
         logging.info("User info {}".format(self.users))
 
-        if self.users[body_values[AUTHOR_ID]] == ALERT_NUMBER:
-            logging.info("Reporting on user = {}".format(body_values[AUTHOR_ID]))
+        if self.users[author_id] == ALERT_NUMBER:
+            logging.info("Reporting on user = {}".format(author_id))
             with open(USR_REPORT_FILE, mode='a') as report:
                 fcntl.flock(report, fcntl.LOCK_EX)
-                report.write("{}\n".format(body_values[AUTHOR_ID]))
+                report.write("{}\n".format(author_id))
                 fcntl.flock(report, fcntl.LOCK_UN)
 
     def run(self):

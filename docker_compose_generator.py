@@ -64,6 +64,7 @@ def generate_docker_compose_file(args):
         write_date_aggregator_service(docker_compose_file, args)
 
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--filter-parser-workers", help="number of filter parser workers", default=1, type=int)
