@@ -15,7 +15,7 @@ All the configuration is handled by the `docker_compose_generator` python script
 --analyzer-workers=<number of analyzer workers>
 --user-reducer-workers=<number of user reducer workers>
 --date-reducer-workers=<number of date reducer workers>
---twits-file=<file from where to read the twits>
+--twits-file=<file from where to read the twits, the file should be located in the "reports" folder>
 --logs-file=<log file to write to, the file should be located in the "reports" folder>
 ```
 
