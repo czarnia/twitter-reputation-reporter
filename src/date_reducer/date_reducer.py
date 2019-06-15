@@ -20,17 +20,26 @@ NEGATIVE = "negative"
 DATE_RECEIVE_QUEUE_NAME = "date_twits"
 DATE_SEND_QUEUE_NAME = "date_processed_twits"
 
+LOG_FREQUENCY = 1000
+
 class DateReducer(object):
     def __init__(self, receive_rabbitmq_queue, send_rabbitmq_queue):
         self.receive_rabbitmq_queue = receive_rabbitmq_queue
         self.send_rabbitmq_queue = send_rabbitmq_queue
         self.received = 0
+        self.log_counter = 0
         self.dates = {}
 
     def _callback(self, ch, method, properties, body):
         self.received += 1
-        logging.info("Received {}".format(body.decode('UTF-8')))
-        body_values = body.decode('UTF-8').split(",")
+
+        decoded_body = body.decode('UTF-8')
+
+        if (self.log_counter % LOG_FREQUENCY == 0):
+            logging.info("Received line [%d] %s", self.log_counter, decoded_body)
+        self.log_counter += 1
+
+        body_values = decoded_body.split(",")
 
         date = body_values[DATE]
         score = body_values[SCORE]
@@ -43,13 +52,12 @@ class DateReducer(object):
         else:
             self.dates[date][POSITIVE] += 1
 
-        logging.info("Dates info {}".format(self.dates))
-
         if self.received != FLUSH_VALUE:
             return
 
         for date in self.dates:
-            logging.info("Sending: date = {}, positives = {}, negatives = {}".format(date, self.dates[date][POSITIVE], self.dates[date][NEGATIVE]))
+            if (self.log_counter % LOG_FREQUENCY == 0):
+                logging.info("Sending: date = %s, positives = %s, negatives = %s", date, self.dates[date][POSITIVE], self.dates[date][NEGATIVE])
             self.send_rabbitmq_queue.send("{},{},{}".format(date, self.dates[date][POSITIVE], self.dates[date][NEGATIVE]))
 
         self.dates = {}
@@ -61,7 +69,6 @@ class DateReducer(object):
         self.receive_rabbitmq_queue.consume(self._callback)
         logging.info("Stopped consuming, dates info obtained {}".format(self.dates))
         for date in self.dates:
-            logging.info("Sending: date = {}, positives = {}, negatives = {}".format(date, self.dates[date][POSITIVE], self.dates[date][NEGATIVE]))
             self.send_rabbitmq_queue.send("{},{},{}".format(date, self.dates[date][POSITIVE], self.dates[date][NEGATIVE]))
         logging.info("Sending EOM to queues")
         self.send_rabbitmq_queue.send_eom()

@@ -18,35 +18,43 @@ USR_REPORT_FILE = "/twitter_reporter/reports/user_report.csv"
 
 USR_RECEIVE_QUEUE_NAME = "usr_twits"
 
+LOG_FREQUENCY = 1000
+
 class UserReducer(object):
     def __init__(self, rabbitmq_queue):
         self.rabbitmq_queue = rabbitmq_queue
         self.users = {}
+        self.log_counter = 0
 
     def _was_already_alerted(self, author_id):
         return (author_id in self.users and self.users[author_id] == ALERT_NUMBER)
 
     def _callback(self, ch, method, properties, body):
-        logging.info("Received {}".format(body.decode('UTF-8')))
-        body_values = body.decode('UTF-8').split(",")
+        decoded_body = body.decode('UTF-8')
+
+        if (self.log_counter % LOG_FREQUENCY == 0):
+            logging.info("Received line [%d] %s", self.log_counter, decoded_body)
+
+        body_values = decoded_body.split(",")
 
         author_id = body_values[AUTHOR_ID]
         score = body_values[SCORE]
 
         if int(score) != NEGATIVE_SCORE or self._was_already_alerted(author_id):
-            logging.info("Skipping value since it does not have a negative score or was already alerted")
+            if (self.log_counter % LOG_FREQUENCY == 0):
+                logging.info("Skipping value since it does not have a negative score or was already alerted")
             return
 
         self.users[author_id] = self.users.get(author_id, 0) + 1
 
-        logging.info("User info {}".format(self.users))
-
         if self.users[author_id] == ALERT_NUMBER:
-            logging.info("Reporting on user = {}".format(author_id))
+            logging.info("Reporting on user = %s", author_id)
             with open(USR_REPORT_FILE, mode='a') as report:
                 fcntl.flock(report, fcntl.LOCK_EX)
                 report.write("{}\n".format(author_id))
                 fcntl.flock(report, fcntl.LOCK_UN)
+
+        self.log_counter += 1
 
     def run(self):
         logging.info("Starting consuming")

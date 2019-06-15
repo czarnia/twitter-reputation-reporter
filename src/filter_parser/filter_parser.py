@@ -22,10 +22,13 @@ IS_CUSTOMER = "True"
 RECEIVE_QUEUE_NAME = "preprocesed_twits"
 SEND_QUEUE_NAME = "raw_twits"
 
+LOG_FREQUENCY = 1000
+
 class FilterParser(object):
     def __init__(self, send_queues, receive_queue):
         self.send_queues = send_queues
         self.receive_queue = receive_queue
+        self.log_counter = 0
 
     def run(self):
         logging.info("Start consuming")
@@ -35,16 +38,26 @@ class FilterParser(object):
         logging.info("Finish")
 
     def _callback(self, ch, method, properties, body):
-        logging.info("Received {}".format(body.decode('UTF-8')))
-        body_values = body.decode('UTF-8').rstrip().split(",")
+        decoded_body = body.decode('UTF-8')
+
+        if (self.log_counter % LOG_FREQUENCY == 0):
+            logging.info("Received line [%d] %s", self.log_counter, decoded_body)
+
+        body_values = decoded_body.rstrip().split(",")
 
         if (len(body_values) != NUM_COLUMS) or (body_values[INBOUND] != IS_CUSTOMER):
-            logging.info("Twit discarted")
+            if (self.log_counter % LOG_FREQUENCY == 0):
+                logging.info("Twit discarted")
+            self.log_counter += 1
             return
 
         day = str(parse(body_values[CREATED_AT]).date())
-        logging.info("Sending parsed value")
+
+        if (self.log_counter % LOG_FREQUENCY == 0):
+            logging.info("Sending parsed value")
+        
         self.send_queues.send("{},{},{}".format(body_values[AUTHOR_ID], day, body_values[TEXT]), body.decode('UTF-8'))
+        self.log_counter += 1
 
 if __name__ == '__main__':
     config_log("FILTER PARSER")

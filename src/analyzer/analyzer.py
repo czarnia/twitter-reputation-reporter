@@ -24,12 +24,15 @@ RECEIVE_QUEUE_NAME = "preprocesed_twits"
 SEND_USR_QUEUE_NAME = "usr_twits"
 SEND_DATE_QUEUE_NAME = "date_twits"
 
+LOG_FREQUENCY = 1000
+
 
 class TwitterTextSentimentAnalyzer(object):
     def __init__(self, receive_queue, send_usr_queues, send_date_queues):
         self.receive_queue = receive_queue
         self.send_usr_queues = send_usr_queues
         self.send_date_queues = send_date_queues
+        self.log_counter = 0
         self.sentiment_analyzer = SentimentIntensityAnalyzer()
 
     def _is_score_neutral(self, score):
@@ -39,21 +42,33 @@ class TwitterTextSentimentAnalyzer(object):
         return POSITIVE_SCORE if score >= BASE_POSITIVE_SCORE else NEGATIVE_SCORE
 
     def _callback(self, ch, method, properties, body):
-        logging.info("Received {}".format(body.decode('UTF-8')))
-        body_values = body.decode('UTF-8').split(",")
+        decoded_body = body.decode('UTF-8')
+
+        if (self.log_counter % LOG_FREQUENCY == 0):
+            logging.info("Received line [%d] %s", self.log_counter, decoded_body)
+
+        body_values = decoded_body.split(",")
 
         score = self.sentiment_analyzer.polarity_scores(body_values[TEXT])['compound']
-        logging.info("Score is {}".format(score))
+
+        if (self.log_counter % LOG_FREQUENCY == 0):
+            logging.info("Score is %s", score)
 
         if self._is_score_neutral(score):
-            logging.info("The score is neutral")
+            if (self.log_counter % LOG_FREQUENCY == 0):
+                logging.info("The score is neutral")
+            self.log_counter += 1
             return
 
         score = self._map_score(score)
 
-        logging.info("Sending: author_id = {}, date = {}, score = {}".format(body_values[AUTHOR_ID], body_values[CREATED_AT], score))
+        if (self.log_counter % LOG_FREQUENCY == 0):
+            logging.info("Sending: author_id = %s, date = %s, score = %s", body_values[AUTHOR_ID], body_values[CREATED_AT], score)
+            
         self.send_usr_queues.send("{},{}".format(body_values[AUTHOR_ID], score), body_values[AUTHOR_ID])
         self.send_date_queues.send("{},{}".format(body_values[CREATED_AT], score), body_values[AUTHOR_ID])
+
+        self.log_counter += 1
 
     def run(self):
         logging.info("Start consuming")

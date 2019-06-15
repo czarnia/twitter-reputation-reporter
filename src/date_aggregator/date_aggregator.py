@@ -16,14 +16,22 @@ NEGATIVE = "negative"
 RECEIVE_QUEUE_NAME = "date_processed_twits"
 DATE_REPORT_FILE = "/twitter_reporter/reports/dates_report.csv"
 
+LOG_FREQUENCY = 1000
+
 class DateAggregator(object):
     def __init__(self, rabbitmq_queue):
         self.rabbitmq_queue = rabbitmq_queue
         self.dates = {}
+        self.log_counter = 0
 
     def _callback(self, ch, method, properties, body):
-        logging.info("Received {}".format(body.decode('UTF-8')))
-        body_values = body.decode('UTF-8').split(",")
+        decoded_body = body.decode('UTF-8')
+
+        if (self.log_counter % LOG_FREQUENCY == 0):
+            logging.info("Received line [%d] %s", self.log_counter, decoded_body)
+        self.log_counter += 1
+
+        body_values = decoded_body.split(",")
 
         date = body_values[DATE]
         positive_scores = body_values[POSITIVES]
@@ -34,13 +42,12 @@ class DateAggregator(object):
 
         self.dates[date][NEGATIVE] += int(negative_scores)
         self.dates[date][POSITIVE] += int(positive_scores)
-        logging.info("Dates info: {}".format(self.dates))
 
     def run(self):
         logging.info("Start consuming")
         self.rabbitmq_queue.consume(self._callback)
 
-        logging.info("Stoped consuming, dates info obtained: {}".format(self.dates))
+        logging.info("Stoped consuming")
         dates = list(self.dates.keys())
         dates.sort()
 
@@ -48,7 +55,7 @@ class DateAggregator(object):
         with open(DATE_REPORT_FILE, mode='w') as report:
             report.write("DATE, POSITIVES, NEGATIVES\n")
             for date in dates:
-                logging.info("Writing {},{},{}".format(date, self.dates[date][POSITIVE], self.dates[date][NEGATIVE]))
+                logging.info("Writing %s,%s,%s", date, self.dates[date][POSITIVE], self.dates[date][NEGATIVE])
                 report.write("{},{},{}\n".format(date, self.dates[date][POSITIVE], self.dates[date][NEGATIVE]))
 
 
