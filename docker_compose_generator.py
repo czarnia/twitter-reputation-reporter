@@ -7,7 +7,7 @@ def generate_env_file_with_service_id(args, file_name, service_id):
         config_file.write("FILTER_PARSER_WORKERS={}\n".format(args.filter_parser_workers))
         config_file.write("ANALYZER_WORKERS={}\n".format(args.analyzer_workers))
         config_file.write("USER_REDUCER_WORKERS={}\n".format(args.user_reducer_workers))
-        config_file.write("DATE_REDUCER_WORKERS={}\n".format(args.user_reducer_workers))
+        config_file.write("DATE_REDUCER_WORKERS={}\n".format(args.date_reducer_workers))
 
         config_file.write("TWITS_FILE=/twitter_reporter/reports/{}\n".format(args.twits_file))
         config_file.write("LOGS_FILE=/twitter_reporter/reports/{}".format(args.logs_file))
